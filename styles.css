@@ -1,0 +1,720 @@
+/* Mobile-First Responsive CSS */
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    line-height: 1.6;
+    background: linear-gradient(135deg, #ff6b6b, #ffa500, #ff1744, #ffeb3b);
+    background-size: 400% 400%;
+    animation: gradientAnimation 6s ease infinite;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 16px;
+}
+
+@keyframes gradientAnimation {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.section {
+    min-height: 100vh;
+    display: none;
+    padding: 16px 0;
+}
+
+.section.active {
+    display: block;
+}
+
+/* Header - Mobile First */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.language-toggle {
+    position: relative;
+}
+
+.lang-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    font-size: 14px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.lang-btn:hover, .lang-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Landing Page - Mobile First */
+.hero {
+    text-align: center;
+    padding: 40px 0;
+    position: relative;
+}
+
+.hero-title {
+    font-size: 2rem;
+    color: white;
+    margin-bottom: 16px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    animation: titlePulse 2s ease-in-out infinite alternate;
+    line-height: 1.2;
+}
+
+@keyframes titlePulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 16px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    line-height: 1.3;
+}
+
+.hero-description {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 32px;
+    line-height: 1.5;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Countdown Timer - Mobile First */
+.countdown {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 32px auto;
+    max-width: 280px;
+}
+
+.countdown-item {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px 8px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.countdown-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    line-height: 1;
+}
+
+.countdown-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+/* CTA Button - Mobile First */
+.cta-btn {
+    background: linear-gradient(45deg, #ff4081, #ff6ec7);
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    padding: 16px 32px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    animation: ctaPulse 3s ease-in-out infinite;
+    width: 100%;
+    max-width: 300px;
+}
+
+@keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); }
+    50% { box-shadow: 0 12px 24px rgba(255, 64, 129, 0.4); }
+}
+
+.cta-btn:hover, .cta-btn:active {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px rgba(255, 64, 129, 0.4);
+}
+
+/* Festival Icons - Mobile First */
+.festival-icons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.icon {
+    font-size: 2rem;
+    animation: float 3s ease-in-out infinite;
+    opacity: 0.8;
+}
+
+.icon:nth-child(odd) {
+    animation-delay: 0.5s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+}
+
+/* Builder Section - Mobile First */
+.builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.back-btn:hover, .back-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+#builderTitle {
+    color: white;
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    flex-grow: 1;
+    text-align: center;
+    margin: 0 16px;
+}
+
+.builder-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.templates-section, .customization-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.templates-section h3, .customization-section h3 {
+    color: white;
+    margin-bottom: 16px;
+    font-size: 1.3rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Template Grid - Mobile First */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.template-item {
+    aspect-ratio: 2/3;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 3px solid transparent;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.template-item:hover, .template-item:active {
+    transform: scale(1.02);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.template-item.selected {
+    border-color: #ff4081;
+    box-shadow: 0 0 16px rgba(255, 64, 129, 0.6);
+    transform: scale(1.02);
+}
+
+.template-item canvas {
+    display: block;
+}
+
+/* Form Elements - Mobile First */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: white;
+    margin-bottom: 8px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 1rem;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 16px; /* Prevents zoom on iOS */
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #ff4081;
+    box-shadow: 0 0 8px rgba(255, 64, 129, 0.3);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.form-group input[type="file"] {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Preview Section - Mobile First */
+.preview-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.preview-section h3 {
+    color: white;
+    margin-bottom: 16px;
+    font-size: 1.3rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.card-preview {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+#cardCanvas {
+    border-radius: 15px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    max-width: 100%;
+    height: auto;
+}
+
+/* Action Buttons - Mobile First */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-primary, .btn-secondary {
+    width: 100%;
+    max-width: 250px;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #4caf50, #81c784);
+    color: white;
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #2196f3, #64b5f6);
+    color: white;
+}
+
+.btn-primary:hover, .btn-primary:active,
+.btn-secondary:hover, .btn-secondary:active {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal - Mobile First */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    padding: 24px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    margin: auto;
+}
+
+.modal h3 {
+    color: white;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.close {
+    color: white;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.close:hover, .close:active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.share-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.share-btn {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.share-btn.whatsapp {
+    background: #25d366;
+}
+
+.share-btn.facebook {
+    background: #1877f2;
+}
+
+.share-btn.messenger {
+    background: #0084ff;
+}
+
+.share-btn:hover, .share-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Tablet Styles (768px and up) */
+@media (min-width: 768px) {
+    .container {
+        padding: 0 24px;
+    }
+    
+    .section {
+        padding: 24px 0;
+    }
+    
+    .hero-title {
+        font-size: 2.8rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.6rem;
+    }
+    
+    .hero-description {
+        font-size: 1.1rem;
+        max-width: 80%;
+    }
+    
+    .hero {
+        padding: 60px 0;
+    }
+    
+    .countdown {
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 400px;
+        gap: 16px;
+    }
+    
+    .countdown-item {
+        padding: 20px 16px;
+    }
+    
+    .countdown-number {
+        font-size: 2.2rem;
+    }
+    
+    .countdown-label {
+        font-size: 0.85rem;
+    }
+    
+    .cta-btn {
+        font-size: 1.3rem;
+        padding: 18px 36px;
+        max-width: 350px;
+    }
+    
+    .festival-icons {
+        gap: 24px;
+        margin-top: 50px;
+    }
+    
+    .icon {
+        font-size: 2.5rem;
+    }
+    
+    .builder-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+    
+    .templates-section, .customization-section, .preview-section {
+        padding: 28px;
+    }
+    
+    .template-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+        gap: 16px;
+        justify-content: center;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: auto;
+        min-width: 180px;
+    }
+    
+    .share-options {
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .share-btn {
+        width: auto;
+        min-width: 120px;
+    }
+    
+    .modal-content {
+        max-width: 500px;
+        padding: 32px;
+    }
+    
+    #builderTitle {
+        font-size: 1.8rem;
+    }
+}
+
+/* Desktop Styles (1024px and up) */
+@media (min-width: 1024px) {
+    .container {
+        padding: 0 32px;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.8rem;
+    }
+    
+    .hero-description {
+        font-size: 1.2rem;
+        max-width: 70%;
+    }
+    
+    .countdown {
+        max-width: 500px;
+        gap: 20px;
+    }
+    
+    .countdown-item {
+        padding: 24px 20px;
+    }
+    
+    .countdown-number {
+        font-size: 2.5rem;
+    }
+    
+    .countdown-label {
+        font-size: 0.9rem;
+    }
+    
+    .cta-btn {
+        font-size: 1.5rem;
+        padding: 20px 40px;
+        max-width: 400px;
+    }
+    
+    .icon {
+        font-size: 3rem;
+    }
+    
+    .festival-icons {
+        gap: 30px;
+        margin-top: 60px;
+    }
+    
+    .builder-content {
+        gap: 40px;
+    }
+    
+    .templates-section, .customization-section, .preview-section {
+        padding: 32px;
+    }
+    
+    .template-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    
+    .template-item:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    }
+    
+    .template-item.selected {
+        transform: scale(1.05);
+    }
+    
+    #builderTitle {
+        font-size: 2rem;
+    }
+}
+
+/* Large Desktop (1200px and up) */
+@media (min-width: 1200px) {
+    .template-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .builder-content {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+/* Touch and Hover States for Better Mobile UX */
+@media (hover: none) {
+    .template-item:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .cta-btn:hover, .btn-primary:hover, .btn-secondary:hover,
+    .back-btn:hover, .lang-btn:hover, .share-btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* High DPI / Retina Display Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    #cardCanvas {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}

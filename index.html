@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Card Builder - Dashain & Tihar Edition</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Landing Page -->
+        <section id="landing" class="section active">
+            <div class="container">
+                <header>
+                    <div class="language-toggle">
+                        <button id="langToggle" class="lang-btn">नेपाली</button>
+                    </div>
+                </header>
+                
+                <main class="hero">
+                    <h1 id="mainTitle" class="hero-title">Festival Card Builder</h1>
+                    <h2 id="subtitle" class="hero-subtitle">Create Beautiful Dashain & Tihar Cards</h2>
+                    <p id="description" class="hero-description">
+                        Create personalized greeting cards with your name, photo, and custom wishes. 
+                        Share instantly with family and friends!
+                    </p>
+                    
+                    <div class="countdown" id="countdown">
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="days">00</span>
+                            <span class="countdown-label" id="daysLabel">Days</span>
+                        </div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="hours">00</span>
+                            <span class="countdown-label" id="hoursLabel">Hours</span>
+                        </div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="minutes">00</span>
+                            <span class="countdown-label" id="minutesLabel">Minutes</span>
+                        </div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="seconds">00</span>
+                            <span class="countdown-label" id="secondsLabel">Seconds</span>
+                        </div>
+                    </div>
+                    
+                    <button id="startBtn" class="cta-btn">
+                        <span id="ctaText">Make Your Dashain Card 🎊</span>
+                    </button>
+                </main>
+                
+                <div class="festival-icons">
+                    <div class="icon">🪁</div>
+                    <div class="icon">🏮</div>
+                    <div class="icon">🎆</div>
+                    <div class="icon">✨</div>
+                    <div class="icon">🌺</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Card Builder -->
+        <section id="builder" class="section">
+            <div class="container">
+                <header class="builder-header">
+                    <button id="backBtn" class="back-btn">← Back</button>
+                    <h2 id="builderTitle">Create Your Festival Card</h2>
+                    <div class="language-toggle">
+                        <button id="langToggle2" class="lang-btn">नेपाली</button>
+                    </div>
+                </header>
+                
+                <div class="builder-content">
+                    <div class="templates-section">
+                        <h3 id="templatesTitle">Choose a Template</h3>
+                        <div class="template-grid" id="templateGrid">
+                            <!-- Templates will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="customization-section">
+                        <h3 id="customizeTitle">Customize Your Card</h3>
+                        <div class="form-group">
+                            <label for="nameInput" id="nameLabel">Your Name:</label>
+                            <input type="text" id="nameInput" placeholder="Enter your name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="wishInput" id="wishLabel">Custom Wish (Optional):</label>
+                            <textarea id="wishInput" placeholder="Enter your personalized wish"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="photoInput" id="photoLabel">Upload Photo (Optional):</label>
+                            <input type="file" id="photoInput" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="preview-section">
+                    <h3 id="previewTitle">Preview</h3>
+                    <div id="cardPreview" class="card-preview">
+                        <canvas id="cardCanvas" width="400" height="600"></canvas>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="downloadBtn" class="btn-primary">
+                            <span id="downloadText">Download Card</span>
+                        </button>
+                        <button id="shareBtn" class="btn-secondary">
+                            <span id="shareText">Share Card</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="shareModalTitle">Share Your Card</h3>
+            <div class="share-options">
+                <button class="share-btn whatsapp" data-platform="whatsapp">
+                    📱 WhatsApp
+                </button>
+                <button class="share-btn facebook" data-platform="facebook">
+                    📘 Facebook
+                </button>
+                <button class="share-btn messenger" data-platform="messenger">
+                    💬 Messenger
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
