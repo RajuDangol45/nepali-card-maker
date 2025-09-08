@@ -6,6 +6,7 @@
     <title>Festival Card Builder - Dashain & Tihar Edition</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -94,23 +95,83 @@
                         <div class="form-group">
                             <label for="photoInput" id="photoLabel">Upload Photo (Optional):</label>
                             <input type="file" id="photoInput" accept="image/*">
+                            <button id="removePhotoBtn" class="btn-remove" style="display: none;"><span id="removePhotoText">Remove Photo</span></button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <h4 id="fontSettingsTitle">Font Settings</h4>
+                            <div class="font-controls">
+                                <div class="font-control-row">
+                                    <label for="fontFamily" id="fontFamilyLabel">Font:</label>
+                                    <select id="fontFamily">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Helvetica">Helvetica</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Trebuchet MS">Trebuchet MS</option>
+                                        <option value="Comic Sans MS">Comic Sans MS</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="font-control-row">
+                                    <label for="fontSize" id="fontSizeLabel">Size:</label>
+                                    <input type="range" id="fontSize" min="12" max="60" value="36">
+                                    <span id="fontSizeValue">36px</span>
+                                </div>
+                                
+                                <div class="font-control-row">
+                                    <label for="fontColor" id="fontColorLabel">Color:</label>
+                                    <input type="color" id="fontColor" value="#ffffff">
+                                </div>
+                                
+                                <div class="font-control-row">
+                                    <label id="fontStyleLabel">Style:</label>
+                                    <div class="font-style-buttons">
+                                        <button type="button" id="boldBtn" class="font-style-btn">B</button>
+                                        <button type="button" id="italicBtn" class="font-style-btn">I</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button id="resetCardBtn" class="btn-reset">
+                                <span id="resetText">Reset Card</span>
+                            </button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="preview-section">
                     <h3 id="previewTitle">Preview</h3>
+                    <div class="preview-controls">
+                        <button id="playPauseBtn" class="preview-control-btn">
+                            <span id="playPauseText">⏸️ Pause</span>
+                        </button>
+                    </div>
                     <div id="cardPreview" class="card-preview">
                         <canvas id="cardCanvas" width="400" height="600"></canvas>
                     </div>
                     
                     <div class="action-buttons">
                         <button id="downloadBtn" class="btn-primary">
-                            <span id="downloadText">Download Card</span>
+                            <span id="downloadText">Download PNG</span>
+                        </button>
+                        <button id="downloadGifBtn" class="btn-gif">
+                            <span id="downloadGifText">Download GIF</span>
+                            <span class="beta-badge">BETA</span>
                         </button>
                         <button id="shareBtn" class="btn-secondary">
                             <span id="shareText">Share Card</span>
                         </button>
+                    </div>
+                    
+                    <div id="gifProgress" class="gif-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <span id="progressText" class="progress-text">Generating GIF...</span>
                     </div>
                 </div>
             </div>
