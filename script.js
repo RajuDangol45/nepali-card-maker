@@ -26,6 +26,15 @@ class FestivalCardBuilder {
         this.previewFrame = 0;
         this.isPreviewPlaying = true;
         
+        // Drag and drop functionality for text positioning
+        this.textPositions = {
+            name: { x: null, y: null }, // null means use default positioning
+            wish: { x: null, y: null }
+        };
+        this.isDragging = false;
+        this.dragTarget = null;
+        this.dragOffset = { x: 0, y: 0 };
+        
         this.translations = {
             en: {
                 mainTitle: 'Festival Card Builder',
@@ -36,7 +45,7 @@ class FestivalCardBuilder {
                 templatesTitle: 'Choose a Template',
                 customizeTitle: 'Customize Your Card',
                 nameLabel: 'Name of the Recipient:',
-                wishLabel: 'Custom Wish (Optional):',
+                wishSelectorLabel: 'Choose Your Wish:',
                 photoLabel: 'Upload Photo (Optional):',
                 previewTitle: 'Preview',
                 downloadText: 'Download PNG',
@@ -64,7 +73,7 @@ class FestivalCardBuilder {
                 templatesTitle: 'टेम्प्लेट छान्नुहोस्',
                 customizeTitle: 'आफ्नो कार्ड अनुकूलित गर्नुहोस्',
                 nameLabel: 'प्राप्तकर्ताको नाम:',
-                wishLabel: 'व्यक्तिगत शुभकामना (वैकल्पिक):',
+                wishSelectorLabel: 'आफ्नो शुभकामना छान्नुहोस्:',
                 photoLabel: 'फोटो अपलोड गर्नुहोस् (वैकल्पिक):',
                 previewTitle: 'पूर्वावलोकन',
                 downloadText: 'PNG डाउनलोड गर्नुहोस्',
@@ -85,83 +94,18 @@ class FestivalCardBuilder {
             }
         };
         
-        this.templates = [
-            {
-                id: 'dashain2',
-                name: 'Traditional Tika',
-                background: 'linear-gradient(135deg, #dc143c, #ff6347)',
-                colors: ['#dc143c', '#ff6347'],
-                decorations: ['🌺', '🙏', '🌺'],
-                wishes: {
-                    en: 'Wishing you a blessed Dashain filled with love and happiness.',
-                    ne: 'तपाईंलाई प्रेम र खुशीले भरिएको धन्य दशैंको शुभकामना।'
-                }
-            },
-            {
-                id: 'tihar1',
-                name: 'Tihar Lights',
-                background: 'linear-gradient(135deg, #ff8c00, #ffd700)',
-                colors: ['#ff8c00', '#ffd700'],
-                decorations: ['🏮', '✨', '🏮'],
-                wishes: {
-                    en: 'Happy Tihar! May the festival of lights illuminate your path to success.',
-                    ne: 'शुभ तिहार! उज्यालोको यो चाडले तपाईंको सफलताको बाटो उज्यालो पारोस्।'
-                }
-            },
-            {
-                id: 'dashain3',
-                name: 'Kite Flying Day',
-                background: 'linear-gradient(135deg, #87ceeb, #98fb98)',
-                colors: ['#87ceeb', '#98fb98'],
-                decorations: ['🪁', '☀️', '🪁'],
-                wishes: {
-                    en: 'May your spirits soar high like kites in the sky this Dashain!',
-                    ne: 'यो दशैंमा तपाईंको आत्मा आकाशमा चंगाजस्तै माथि उड्दै जाओस्!'
-                }
-            },
-            {
-                id: 'dashain4',
-                name: 'Temple Blessings',
-                background: 'linear-gradient(135deg, #8B4513, #DAA520)',
-                colors: ['#8B4513', '#DAA520'],
-                decorations: ['🙏', '🛕', '🙏'],
-                wishes: {
-                    en: 'May the divine blessings of Dashain bring peace and prosperity to your family!',
-                    ne: 'दशैंको दिव्य आशीर्वादले तपाईंको परिवारमा शान्ति र समृद्धि ल्याओस्!'
-                }
-            },
-            {
-                id: 'tihar3',
-                name: 'Deepawali Glow',
-                background: 'linear-gradient(135deg, #4B0082, #FF4500)',
-                colors: ['#4B0082', '#FF4500'],
-                decorations: ['🪔', '✨', '🪔'],
-                wishes: {
-                    en: 'May thousands of diyas light up your path to happiness this Tihar!',
-                    ne: 'हजारौं दियाले तपाईंको खुशीको बाटो उज्यालो पारोस् यो तिहारमा!'
-                }
-            },
-            {
-                id: 'festival2',
-                name: 'Festival of Lights & Joy',
-                background: 'linear-gradient(135deg, #FFD700, #FF69B4)',
-                colors: ['#FFD700', '#FF69B4'],
-                decorations: ['🎆', '🪔', '🎆'],
-                wishes: {
-                    en: 'From kites to lights, may every moment sparkle with happiness!',
-                    ne: 'चंगादेखि बत्तीसम्म, हरेक पल खुशीले चम्किरहोस्!'
-                }
-            }
-        ];
+        // Initialize template manager
+        this.templateManager = null;
+        this.templates = [];
         
         this.init();
     }
     
-    init() {
+    async init() {
         this.setupEventListeners();
         this.initCanvas();
         this.startCountdown();
-        this.loadTemplates();
+        await this.loadTemplates();
         this.updateLanguage();
         this.initFontControls();
     }
@@ -189,7 +133,7 @@ class FestivalCardBuilder {
         
         // Form inputs
         document.getElementById('nameInput').addEventListener('input', () => this.updatePreview());
-        document.getElementById('wishInput').addEventListener('input', () => this.updatePreview());
+        // Wish input listener is now handled in setupWishSelection()
         document.getElementById('photoInput').addEventListener('change', (e) => this.handlePhotoUpload(e));
         
         // Font controls
@@ -224,6 +168,234 @@ class FestivalCardBuilder {
         
         // Preview controls
         document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePreviewPlayback());
+        
+        // Canvas drag and drop for text positioning
+        this.setupTextDragListeners();
+        
+        // Wish selection functionality
+        this.setupWishSelection();
+    }
+    
+    setupTextDragListeners() {
+        const canvas = document.getElementById('cardCanvas');
+        
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => this.handleDragStart(e));
+        canvas.addEventListener('mousemove', (e) => this.handleDragMove(e));
+        canvas.addEventListener('mouseup', (e) => this.handleDragEnd(e));
+        canvas.addEventListener('mouseleave', (e) => this.handleDragEnd(e));
+        
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => this.handleDragStart(e, true));
+        canvas.addEventListener('touchmove', (e) => this.handleDragMove(e, true));
+        canvas.addEventListener('touchend', (e) => this.handleDragEnd(e, true));
+        
+        // Prevent context menu on right click
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+    
+    handleDragStart(e, isTouch = false) {
+        const coords = this.getMouseCoords(e, isTouch);
+        if (!coords) return;
+        
+        // Simple distance-based hit detection for name
+        const namePos = this.getTextPosition('name');
+        const nameDistance = Math.sqrt(
+            Math.pow(coords.x - namePos.x, 2) + 
+            Math.pow(coords.y - namePos.y, 2)
+        );
+        
+        if (nameDistance < 80) {
+            this.isDragging = true;
+            this.dragTarget = 'name';
+            this.dragOffset = { x: coords.x - namePos.x, y: coords.y - namePos.y };
+            this.canvas.style.cursor = 'grabbing';
+            if (isTouch) e.preventDefault();
+            return;
+        }
+        
+        // Simple distance-based hit detection for wish
+        const wishPos = this.getTextPosition('wish');
+        const wishDistance = Math.sqrt(
+            Math.pow(coords.x - wishPos.x, 2) + 
+            Math.pow(coords.y - wishPos.y, 2)
+        );
+        
+        if (wishDistance < 80) {
+            this.isDragging = true;
+            this.dragTarget = 'wish';
+            this.dragOffset = { x: coords.x - wishPos.x, y: coords.y - wishPos.y };
+            this.canvas.style.cursor = 'grabbing';
+            if (isTouch) e.preventDefault();
+        }
+    }
+    
+    handleDragMove(e, isTouch = false) {
+        const coords = this.getMouseCoords(e, isTouch);
+        if (!coords) return;
+        
+        if (!this.isDragging) {
+            // Check for hover effects
+            const namePos = this.getTextPosition('name');
+            const wishPos = this.getTextPosition('wish');
+            
+            const nameDistance = Math.sqrt(
+                Math.pow(coords.x - namePos.x, 2) + 
+                Math.pow(coords.y - namePos.y, 2)
+            );
+            const wishDistance = Math.sqrt(
+                Math.pow(coords.x - wishPos.x, 2) + 
+                Math.pow(coords.y - wishPos.y, 2)
+            );
+            
+            if (nameDistance < 80 || wishDistance < 80) {
+                this.canvas.style.cursor = 'grab';
+            } else {
+                this.canvas.style.cursor = 'default';
+            }
+            return;
+        }
+        
+        // Handle dragging
+        if (isTouch) e.preventDefault();
+        
+        const newX = coords.x - this.dragOffset.x;
+        const newY = coords.y - this.dragOffset.y;
+        
+        // Constrain to canvas bounds
+        const padding = 60;
+        const constrainedX = Math.max(padding, Math.min(this.canvas.width - padding, newX));
+        const constrainedY = Math.max(padding, Math.min(this.canvas.height - padding, newY));
+        
+        // Update text position
+        this.textPositions[this.dragTarget] = { x: constrainedX, y: constrainedY };
+        
+        // Update preview
+        this.updatePreview();
+    }
+    
+    handleDragEnd(e, isTouch = false) {
+        if (this.isDragging) {
+            this.isDragging = false;
+            this.dragTarget = null;
+            this.canvas.style.cursor = 'default';
+        }
+    }
+    
+    getMouseCoords(e, isTouch = false) {
+        let clientX, clientY;
+        if (isTouch) {
+            if (e.touches.length === 0) return null;
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / this.canvas.clientWidth;
+        const scaleY = this.canvas.height / this.canvas.clientHeight;
+        
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+    
+    setupWishSelection() {
+        const predefinedWishBtn = document.getElementById('predefinedWishBtn');
+        const customWishBtn = document.getElementById('customWishBtn');
+        const predefinedWishSection = document.getElementById('predefinedWishSection');
+        const customWishSection = document.getElementById('customWishSection');
+        const wishSelector = document.getElementById('wishSelector');
+        const wishInput = document.getElementById('wishInput');
+
+        // Handle wish type selection buttons
+        predefinedWishBtn.addEventListener('click', () => {
+            predefinedWishBtn.classList.add('active');
+            customWishBtn.classList.remove('active');
+            predefinedWishSection.classList.add('active');
+            customWishSection.classList.remove('active');
+            
+            // Clear custom wish input
+            wishInput.value = '';
+            this.updatePreview();
+        });
+
+        customWishBtn.addEventListener('click', () => {
+            customWishBtn.classList.add('active');
+            predefinedWishBtn.classList.remove('active');
+            customWishSection.classList.add('active');
+            predefinedWishSection.classList.remove('active');
+            
+            // Clear predefined selection
+            wishSelector.value = '';
+            this.updatePreview();
+        });
+
+        // Handle predefined wish selection
+        wishSelector.addEventListener('change', () => {
+            if (wishSelector.value) {
+                // Clear custom wish input when predefined is selected
+                wishInput.value = '';
+                this.updatePreview();
+            }
+        });
+
+        // Handle custom wish input
+        wishInput.addEventListener('input', () => {
+            if (wishInput.value.trim()) {
+                // Clear predefined selection when custom text is entered
+                wishSelector.value = '';
+            }
+            this.updatePreview();
+        });
+    }
+    
+    getCurrentWish() {
+        const wishSelector = document.getElementById('wishSelector');
+        const wishInput = document.getElementById('wishInput');
+        
+        // Return predefined wish if selected
+        if (wishSelector.value) {
+            const selectedOption = wishSelector.options[wishSelector.selectedIndex];
+            return selectedOption ? selectedOption.text : '';
+        }
+        
+        // Return custom wish if entered
+        return wishInput.value.trim();
+    }
+    
+    getTextPosition(textType) {
+        const position = this.textPositions[textType];
+        if (position.x !== null && position.y !== null) {
+            return position;
+        }
+        
+        // Return default position if not set
+        const baseWidth = this.canvas.width;
+        const baseHeight = this.canvas.height;
+        
+        if (textType === 'name') {
+            const nameY = this.uploadedPhoto ? 280 * 3 : 200 * 3; // Scale factor applied
+            return { x: baseWidth / 2, y: nameY };
+        } else if (textType === 'wish') {
+            const nameY = this.uploadedPhoto ? 280 * 3 : 200 * 3;
+            const wishY = nameY + 60 * 3; // Scale factor applied
+            return { x: baseWidth / 2, y: wishY };
+        }
+        
+        return { x: baseWidth / 2, y: baseHeight / 2 };
+    }
+    
+    resetTextPositions() {
+        // Reset text positions to defaults
+        this.textPositions = {
+            name: { x: null, y: null },
+            wish: { x: null, y: null }
+        };
+        this.updatePreview();
     }
     
     initCanvas() {
@@ -294,7 +466,7 @@ class FestivalCardBuilder {
         document.getElementById('templatesTitle').textContent = t.templatesTitle;
         document.getElementById('customizeTitle').textContent = t.customizeTitle;
         document.getElementById('nameLabel').textContent = t.nameLabel;
-        document.getElementById('wishLabel').textContent = t.wishLabel;
+        document.getElementById('wishSelectorLabel').textContent = t.wishSelectorLabel;
         document.getElementById('photoLabel').textContent = t.photoLabel;
         document.getElementById('previewTitle').textContent = t.previewTitle;
         document.getElementById('downloadText').textContent = t.downloadText;
@@ -357,7 +529,59 @@ class FestivalCardBuilder {
         const countdownInterval = setInterval(updateCountdown, 1000);
     }
     
-    loadTemplates() {
+    async loadTemplates() {
+        // Initialize template manager
+        if (typeof TemplateManager !== 'undefined') {
+            this.templateManager = new TemplateManager(this);
+            await this.templateManager.loadTemplates();
+            this.templates = this.templateManager.getAllTemplateConfigs();
+        } else {
+            // Fallback to legacy templates if TemplateManager not available
+            this.templates = this.getLegacyTemplates();
+        }
+        
+        this.renderTemplateGrid();
+    }
+    
+    getLegacyTemplates() {
+        return [
+            {
+                id: 'dashain2',
+                name: 'Traditional Tika',
+                background: 'linear-gradient(135deg, #dc143c, #ff6347)',
+                colors: ['#dc143c', '#ff6347'],
+                decorations: ['🌺', '🙏', '🌺'],
+                wishes: {
+                    en: 'Wishing you a blessed Dashain filled with love and happiness.',
+                    ne: 'तपाईंलाई प्रेम र खुशीले भरिएको धन्य दशैंको शुभकामना।'
+                }
+            },
+            {
+                id: 'tihar1',
+                name: 'Tihar Lights',
+                background: 'linear-gradient(135deg, #ff8c00, #ffd700)',
+                colors: ['#ff8c00', '#ffd700'],
+                decorations: ['🏮', '✨', '🏮'],
+                wishes: {
+                    en: 'Happy Tihar! May the festival of lights illuminate your path to success.',
+                    ne: 'शुभ तिहार! उज्यालोको यो चाडले तपाईंको सफलताको बाटो उज्यालो पारोस्।'
+                }
+            },
+            {
+                id: 'dashain3',
+                name: 'Kite Flying Day',
+                background: 'linear-gradient(135deg, #87ceeb, #98fb98)',
+                colors: ['#87ceeb', '#98fb98'],
+                decorations: ['🪁', '☀️', '🪁'],
+                wishes: {
+                    en: 'May your spirits soar high like kites in the sky this Dashain!',
+                    ne: 'यो दशैंमा तपाईंको आत्मा आकाशमा चंगाजस्तै माथि उड्दै जाओस्!'
+                }
+            }
+        ];
+    }
+    
+    renderTemplateGrid() {
         const templateGrid = document.getElementById('templateGrid');
         
         this.templates.forEach((template, index) => {
@@ -509,13 +733,16 @@ class FestivalCardBuilder {
                     this.renderKiteFlyingBackground(ctx, width, height, true);
                     break;
                 case 'dashain4':
-                    this.renderTempleBackground(ctx, width, height, true);
-                    break;
-                case 'tihar3':
-                    this.renderDeepawaliBackground(ctx, width, height, true);
-                    break;
-                case 'festival2':
-                    this.renderFestivalLightsBackground(ctx, width, height, true);
+                case 'dashain5':
+                    if (this.templateManager && this.templateManager.renderTemplate(template.id, ctx, width, height)) {
+                        break;
+                    }
+                    // Fallback for legacy rendering
+                    if (template.id === 'dashain4') {
+                        this.renderMinimalistDashainBackground(ctx, width, height, true);
+                    } else {
+                        this.renderDurgaGraceBackground(ctx, width, height, true);
+                    }
                     break;
                 default:
                     // Fallback
@@ -1156,6 +1383,303 @@ class FestivalCardBuilder {
             ctx.lineTo(x + 2, y - grassHeight);
             ctx.stroke();
         });
+    }
+    
+    renderMinimalistDashainBackground(ctx, width, height, isPreview = false) {
+        // Soft gradient background - very gentle colors
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, '#f8f9fa'); // Very light grey
+        gradient.addColorStop(0.3, '#f1f3f4'); // Slightly darker grey
+        gradient.addColorStop(0.7, '#e8eaed'); // Light silver
+        gradient.addColorStop(1, '#dadce0'); // Soft grey bottom
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Subtle Om symbol in background
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.font = `${width * 0.25}px serif`;
+        ctx.fillStyle = '#6c757d';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ॐ', width / 2, height * 0.35);
+        ctx.restore();
+        
+        // Minimal decorative border
+        ctx.strokeStyle = 'rgba(108, 117, 125, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 10]);
+        ctx.strokeRect(width * 0.05, height * 0.05, width * 0.9, height * 0.9);
+        ctx.setLineDash([]);
+        
+        // Subtle lotus petals in corners
+        this.drawMinimalLotus(ctx, width * 0.1, height * 0.9, width * 0.08);
+        this.drawMinimalLotus(ctx, width * 0.9, height * 0.9, width * 0.08);
+        this.drawMinimalLotus(ctx, width * 0.1, height * 0.1, width * 0.08);
+        this.drawMinimalLotus(ctx, width * 0.9, height * 0.1, width * 0.08);
+    }
+    
+    drawMinimalLotus(ctx, x, y, size) {
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = '#dc3545';
+        
+        // Simple lotus shape with 5 petals
+        for (let i = 0; i < 5; i++) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate((i * 72) * Math.PI / 180);
+            
+            ctx.beginPath();
+            ctx.ellipse(0, -size * 0.3, size * 0.2, size * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Center circle
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    renderDurgaGraceBackground(ctx, width, height, isPreview = false) {
+        // Warm cream gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, '#fef9e7'); // Warm cream
+        gradient.addColorStop(0.3, '#fdf6e3'); // Light cream
+        gradient.addColorStop(0.7, '#f8f4e6'); // Soft beige
+        gradient.addColorStop(1, '#f5f1e8'); // Gentle tan
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Beautiful Durga face design (similar to traditional art)
+        const centerX = width / 2;
+        const centerY = height * 0.4;
+        const scale = width * 0.12;
+        
+        this.drawDurgaFace(ctx, centerX, centerY, scale);
+        
+        // Elegant border with traditional patterns
+        ctx.strokeStyle = 'rgba(212, 105, 26, 0.15)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([15, 8, 3, 8]);
+        ctx.strokeRect(width * 0.06, height * 0.06, width * 0.88, height * 0.88);
+        ctx.setLineDash([]);
+        
+        // Sacred trident symbols in corners (very subtle)
+        this.drawMinimalTrident(ctx, width * 0.12, height * 0.12, width * 0.06);
+        this.drawMinimalTrident(ctx, width * 0.88, height * 0.12, width * 0.06);
+        this.drawMinimalTrident(ctx, width * 0.12, height * 0.88, width * 0.06);
+        this.drawMinimalTrident(ctx, width * 0.88, height * 0.88, width * 0.06);
+        
+        // Gentle Sanskrit text "दुर्गा" (Durga) - very subtle
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.font = `${width * 0.08}px serif`;
+        ctx.fillStyle = '#d4691a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('दुर्गा', width / 2, height * 0.75);
+        ctx.restore();
+    }
+    
+    drawMinimalTrident(ctx, x, y, size) {
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        ctx.strokeStyle = '#d4691a';
+        ctx.lineWidth = 2;
+        
+        // Central prong
+        ctx.beginPath();
+        ctx.moveTo(x, y - size * 0.4);
+        ctx.lineTo(x, y + size * 0.4);
+        ctx.stroke();
+        
+        // Left prong
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.25, y - size * 0.3);
+        ctx.lineTo(x - size * 0.25, y + size * 0.2);
+        ctx.stroke();
+        
+        // Right prong
+        ctx.beginPath();
+        ctx.moveTo(x + size * 0.25, y - size * 0.3);
+        ctx.lineTo(x + size * 0.25, y + size * 0.2);
+        ctx.stroke();
+        
+        // Connecting lines
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.25, y - size * 0.3);
+        ctx.lineTo(x, y - size * 0.4);
+        ctx.lineTo(x + size * 0.25, y - size * 0.3);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    drawDurgaFace(ctx, centerX, centerY, scale) {
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = '#b71c1c';
+        ctx.strokeStyle = '#b71c1c';
+        ctx.lineWidth = 2;
+        
+        // Face outline (oval)
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, scale * 0.8, scale * 1.0, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Third eye (crescent moon symbol at top)
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - scale * 0.85, scale * 0.15, Math.PI * 0.2, Math.PI * 0.8);
+        ctx.stroke();
+        
+        // Small dot in crescent (bindu)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - scale * 0.85, scale * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // Eyes (almond shaped)
+        const eyeY = centerY - scale * 0.3;
+        const eyeWidth = scale * 0.35;
+        const eyeHeight = scale * 0.18;
+        
+        // Left eye
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = '#fff';
+        this.drawAlmondEye(ctx, centerX - scale * 0.35, eyeY, eyeWidth, eyeHeight);
+        ctx.restore();
+        
+        // Right eye  
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = '#fff';
+        this.drawAlmondEye(ctx, centerX + scale * 0.35, eyeY, eyeWidth, eyeHeight);
+        ctx.restore();
+        
+        // Eye pupils
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(centerX - scale * 0.35, eyeY, scale * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX + scale * 0.35, eyeY, scale * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // Nose (elegant curve)
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - scale * 0.1);
+        ctx.quadraticCurveTo(centerX - scale * 0.08, centerY, centerX, centerY + scale * 0.1);
+        ctx.stroke();
+        
+        // Nostril details
+        ctx.beginPath();
+        ctx.arc(centerX - scale * 0.06, centerY + scale * 0.05, scale * 0.02, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX + scale * 0.06, centerY + scale * 0.05, scale * 0.02, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // Lips (beautiful curves)
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = '#d32f2f';
+        this.drawLips(ctx, centerX, centerY + scale * 0.4, scale * 0.25);
+        ctx.restore();
+        
+        // Crown/Mukut (simplified)
+        ctx.save();
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = '#ffd700';
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        
+        // Crown base
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY - scale * 1.15, scale * 0.9, scale * 0.15, 0, Math.PI, 0);
+        ctx.fill();
+        
+        // Crown peaks
+        for (let i = 0; i < 5; i++) {
+            const angle = Math.PI + (i * Math.PI / 4);
+            const peakX = centerX + Math.cos(angle) * scale * 0.7;
+            const peakY = centerY - scale * 1.15;
+            const height = scale * (0.2 + (i === 2 ? 0.15 : 0));
+            
+            ctx.beginPath();
+            ctx.moveTo(peakX - scale * 0.08, peakY);
+            ctx.lineTo(peakX, peakY - height);
+            ctx.lineTo(peakX + scale * 0.08, peakY);
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+        
+        // Earrings
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = '#ffd700';
+        
+        // Left earring
+        ctx.beginPath();
+        ctx.arc(centerX - scale * 0.75, centerY - scale * 0.1, scale * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(centerX - scale * 0.75, centerY + scale * 0.05, scale * 0.06, scale * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Right earring
+        ctx.beginPath();
+        ctx.arc(centerX + scale * 0.75, centerY - scale * 0.1, scale * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(centerX + scale * 0.75, centerY + scale * 0.05, scale * 0.06, scale * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        ctx.restore();
+    }
+    
+    drawAlmondEye(ctx, x, y, width, height) {
+        ctx.beginPath();
+        ctx.moveTo(x - width/2, y);
+        ctx.quadraticCurveTo(x - width/4, y - height/2, x, y);
+        ctx.quadraticCurveTo(x + width/4, y - height/2, x + width/2, y);
+        ctx.quadraticCurveTo(x + width/4, y + height/2, x, y);
+        ctx.quadraticCurveTo(x - width/4, y + height/2, x - width/2, y);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    drawLips(ctx, x, y, width) {
+        ctx.beginPath();
+        // Upper lip curve
+        ctx.moveTo(x - width, y);
+        ctx.quadraticCurveTo(x - width/2, y - width/3, x, y - width/6);
+        ctx.quadraticCurveTo(x + width/2, y - width/3, x + width, y);
+        // Lower lip curve  
+        ctx.quadraticCurveTo(x + width/2, y + width/4, x, y + width/6);
+        ctx.quadraticCurveTo(x - width/2, y + width/4, x - width, y);
+        ctx.closePath();
+        ctx.fill();
     }
     
     drawCloud(ctx, x, y, size) {
@@ -1921,6 +2445,1028 @@ class FestivalCardBuilder {
         ctx.fill();
     }
     
+    drawPrayerFlagString(ctx, x, y, width) {
+        const flagColors = ['#FF6B6B', '#4ECDC4', '#FFD700', '#9C27B0', '#FF8C00'];
+        const flagWidth = width / flagColors.length;
+        
+        for (let i = 0; i < flagColors.length; i++) {
+            const flagX = x + (i * flagWidth);
+            
+            // Draw flag rope
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(flagX, y);
+            ctx.lineTo(flagX + flagWidth, y);
+            ctx.stroke();
+            
+            // Draw triangular flag
+            ctx.fillStyle = flagColors[i];
+            ctx.beginPath();
+            ctx.moveTo(flagX, y);
+            ctx.lineTo(flagX + flagWidth * 0.8, y + 15);
+            ctx.lineTo(flagX, y + 30);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    
+    drawKhukuriAndGarland(ctx, x, y, size) {
+        // Khukuri (curved knife)
+        ctx.fillStyle = '#C0C0C0';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.6, size * 0.1, Math.PI * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Handle
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - size * 0.1, y + size * 0.3, size * 0.2, size * 0.4);
+        
+        // Garland around it
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const flowerX = x + Math.cos(angle) * size * 0.8;
+            const flowerY = y + Math.sin(angle) * size * 0.8;
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(flowerX, flowerY, size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawTikaCeremony(ctx, x, y, size) {
+        // Elder figure
+        ctx.fillStyle = 'rgba(139, 69, 19, 0.7)';
+        ctx.beginPath();
+        ctx.arc(x - size * 0.3, y - size * 0.3, size * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x - size * 0.4, y - size * 0.1, size * 0.2, size * 0.6);
+        
+        // Younger figure (kneeling)
+        ctx.fillStyle = 'rgba(160, 82, 45, 0.7)';
+        ctx.beginPath();
+        ctx.arc(x + size * 0.2, y, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x + size * 0.1, y + size * 0.15, size * 0.2, size * 0.4);
+        
+        // Tika (red mark)
+        ctx.fillStyle = '#DC143C';
+        ctx.beginPath();
+        ctx.arc(x + size * 0.2, y - size * 0.05, size * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    drawDhakaPatternBorder(ctx, width, height, color) {
+        const borderWidth = 20;
+        ctx.fillStyle = color;
+        
+        // Top border with geometric pattern
+        for (let i = 0; i < width; i += 30) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i + 15, borderWidth);
+            ctx.lineTo(i + 30, 0);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Bottom border
+        for (let i = 0; i < width; i += 30) {
+            ctx.beginPath();
+            ctx.moveTo(i, height);
+            ctx.lineTo(i + 15, height - borderWidth);
+            ctx.lineTo(i + 30, height);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Side borders
+        ctx.fillRect(0, 0, borderWidth, height);
+        ctx.fillRect(width - borderWidth, 0, borderWidth, height);
+    }
+    
+    drawDistantMountains(ctx, width, height) {
+        const mountainPeaks = [
+            { x: 0, y: height * 0.6 },
+            { x: width * 0.2, y: height * 0.3 },
+            { x: width * 0.4, y: height * 0.5 },
+            { x: width * 0.6, y: height * 0.2 },
+            { x: width * 0.8, y: height * 0.4 },
+            { x: width, y: height * 0.6 }
+        ];
+        
+        ctx.fillStyle = 'rgba(105, 105, 105, 0.6)';
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+        mountainPeaks.forEach(peak => {
+            ctx.lineTo(peak.x, peak.y);
+        });
+        ctx.lineTo(width, height);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    drawNepaliFestivalHouse(ctx, x, y, size) {
+        // House base
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - size * 0.5, y, size, size * 0.6);
+        
+        // Traditional sloped roof
+        ctx.fillStyle = '#CD853F';
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.6, y);
+        ctx.lineTo(x, y - size * 0.4);
+        ctx.lineTo(x + size * 0.5, y);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Door and windows
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(x - size * 0.1, y + size * 0.2, size * 0.2, size * 0.4);
+        
+        // Window decorations
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(x - size * 0.4, y + size * 0.15, size * 0.15, size * 0.15);
+        ctx.fillRect(x + size * 0.25, y + size * 0.15, size * 0.15, size * 0.15);
+        
+        // Marigold garlands
+        for (let i = 0; i < 5; i++) {
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            ctx.arc(x - size * 0.4 + (i * size * 0.2), y - size * 0.1, size * 0.03, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawMarigoldGarland(ctx, x, y, width) {
+        const flowerCount = Math.floor(width / 20);
+        for (let i = 0; i < flowerCount; i++) {
+            const flowerX = x + (i * (width / flowerCount));
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            ctx.arc(flowerX, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(flowerX, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawDecoratedGoat(ctx, x, y, size) {
+        ctx.fillStyle = '#F5F5DC';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.6, size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.arc(x - size * 0.3, y - size * 0.2, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.arc(x - size * 0.2 + (i * size * 0.2), y - size * 0.4, size * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawJamaraPots(ctx, x, y, size) {
+        for (let i = 0; i < 3; i++) {
+            const potX = x + (i * size * 0.4);
+            
+            ctx.fillStyle = '#CD853F';
+            ctx.fillRect(potX - size * 0.15, y, size * 0.3, size * 0.4);
+            
+            ctx.fillStyle = '#228B22';
+            for (let j = 0; j < 8; j++) {
+                const grassX = potX - size * 0.1 + (j * size * 0.025);
+                const grassHeight = size * 0.3 + Math.random() * size * 0.2;
+                ctx.fillRect(grassX, y - grassHeight, 2, grassHeight);
+            }
+        }
+    }
+    
+    drawLotusPond(ctx, x, y, size) {
+        ctx.fillStyle = 'rgba(70, 130, 180, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2;
+            const lotusX = x + Math.cos(angle) * size * 0.4;
+            const lotusY = y + Math.sin(angle) * size * 0.3;
+            
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.arc(lotusX, lotusY, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawDhakaElements(ctx, width, height) {
+        const patterns = 8;
+        for (let i = 0; i < patterns; i++) {
+            const x = (i / patterns) * width;
+            const y = height * 0.95;
+            
+            ctx.fillStyle = '#DC143C';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + 15, y - 10);
+            ctx.lineTo(x + 30, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    
+    drawDistantKites(ctx, width, height) {
+        const kitePositions = [
+            { x: width * 0.1, y: height * 0.15, size: 8, color: '#FF6B6B' },
+            { x: width * 0.3, y: height * 0.1, size: 6, color: '#4ECDC4' },
+            { x: width * 0.7, y: height * 0.12, size: 7, color: '#FFD700' },
+            { x: width * 0.9, y: height * 0.18, size: 5, color: '#9C27B0' }
+        ];
+        
+        kitePositions.forEach(kite => {
+            ctx.fillStyle = kite.color;
+            ctx.beginPath();
+            ctx.moveTo(kite.x, kite.y - kite.size);
+            ctx.lineTo(kite.x - kite.size * 0.7, kite.y);
+            ctx.lineTo(kite.x, kite.y + kite.size);
+            ctx.lineTo(kite.x + kite.size * 0.7, kite.y);
+            ctx.closePath();
+            ctx.fill();
+        });
+    }
+    
+    drawTiharHouse(ctx, x, y, width, height) {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x, y, width, height);
+        
+        ctx.fillStyle = '#CD853F';
+        ctx.beginPath();
+        ctx.moveTo(x - width * 0.1, y);
+        ctx.lineTo(x + width * 0.5, y - height * 0.3);
+        ctx.lineTo(x + width * 1.1, y);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 2; j++) {
+                const lightX = x + width * 0.2 + (i * width * 0.25);
+                const lightY = y + height * 0.2 + (j * height * 0.3);
+                ctx.beginPath();
+                ctx.arc(lightX, lightY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+    
+    drawFestivalStringLights(ctx, x, y, width) {
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + width * 0.5, y + 20, x + width, y);
+        ctx.stroke();
+        
+        const lightColors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#9C27B0'];
+        const lightCount = 6;
+        
+        for (let i = 0; i < lightCount; i++) {
+            const t = i / (lightCount - 1);
+            const lightX = x + t * width;
+            const lightY = y + 20 * Math.sin(Math.PI * t);
+            
+            ctx.fillStyle = lightColors[i % lightColors.length];
+            ctx.beginPath();
+            ctx.arc(lightX, lightY, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawDetailedRangoli(ctx, x, y, size, type) {
+        const colors = ['#FF6B6B', '#FFD700', '#4ECDC4', '#9C27B0', '#FF8C00'];
+        
+        if (type === 'flower') {
+            for (let ring = 0; ring < 3; ring++) {
+                const petals = 8;
+                for (let i = 0; i < petals; i++) {
+                    const angle = (i / petals) * Math.PI * 2;
+                    const petalX = x + Math.cos(angle) * size * (0.3 + ring * 0.2);
+                    const petalY = y + Math.sin(angle) * size * (0.3 + ring * 0.2);
+                    
+                    ctx.fillStyle = colors[ring];
+                    ctx.beginPath();
+                    ctx.arc(petalX, petalY, size * 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        } else {
+            for (let ring = 0; ring < 4; ring++) {
+                const sides = 6;
+                ctx.strokeStyle = colors[ring];
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                for (let i = 0; i <= sides; i++) {
+                    const angle = (i / sides) * Math.PI * 2;
+                    const pointX = x + Math.cos(angle) * size * (0.2 + ring * 0.15);
+                    const pointY = y + Math.sin(angle) * size * (0.2 + ring * 0.15);
+                    if (i === 0) ctx.moveTo(pointX, pointY);
+                    else ctx.lineTo(pointX, pointY);
+                }
+                ctx.stroke();
+            }
+        }
+    }
+    
+    drawLaxmiFootprints(ctx, x, y, width, height) {
+        const footprintCount = 6;
+        for (let i = 0; i < footprintCount; i++) {
+            const footX = x + (i % 2) * width * 0.3 + (Math.floor(i / 2) * width * 0.2);
+            const footY = y + (Math.floor(i / 2) * height * 0.15);
+            
+            ctx.fillStyle = '#DC143C';
+            ctx.beginPath();
+            ctx.ellipse(footX, footY, width * 0.04, height * 0.06, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            for (let toe = 0; toe < 5; toe++) {
+                const toeX = footX - width * 0.02 + (toe * width * 0.01);
+                const toeY = footY - height * 0.03;
+                ctx.beginPath();
+                ctx.arc(toeX, toeY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+    
+    drawWindowLamps(ctx, width, height) {
+        const lampPositions = [
+            { x: width * 0.15, y: height * 0.3 },
+            { x: width * 0.35, y: height * 0.35 },
+            { x: width * 0.65, y: height * 0.32 },
+            { x: width * 0.85, y: height * 0.28 }
+        ];
+        
+        lampPositions.forEach(lamp => {
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(lamp.x, lamp.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(lamp.x, lamp.y, 12, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+    
+    drawSparklerEffects(ctx, x, y, size) {
+        const sparkCount = 12;
+        for (let i = 0; i < sparkCount; i++) {
+            const angle = (i / sparkCount) * Math.PI * 2;
+            const sparkX = x + Math.cos(angle) * size * (0.5 + Math.random() * 0.5);
+            const sparkY = y + Math.sin(angle) * size * (0.5 + Math.random() * 0.5);
+            
+            ctx.fillStyle = ['#FFD700', '#FFFFFF', '#FFA500'][Math.floor(Math.random() * 3)];
+            ctx.beginPath();
+            ctx.arc(sparkX, sparkY, 1 + Math.random() * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawPujaAltar(ctx, x, y, width) {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - width * 0.5, y, width, width * 0.2);
+        
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(x - width * 0.4, y - width * 0.05, width * 0.8, width * 0.05);
+        
+        for (let i = 0; i < 5; i++) {
+            const itemX = x - width * 0.3 + (i * width * 0.15);
+            const itemY = y - width * 0.1;
+            
+            ctx.fillStyle = '#FF6B6B';
+            ctx.beginPath();
+            ctx.arc(itemX, itemY, width * 0.03, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawLakshmiSilhouette(ctx, x, y, size) {
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+        
+        ctx.beginPath();
+        ctx.arc(x, y - size * 0.3, size * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillRect(x - size * 0.15, y - size * 0.1, size * 0.3, size * 0.6);
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 4; i++) {
+            const lotusX = x - size * 0.3 + (i * size * 0.2);
+            const lotusY = y + size * 0.6;
+            ctx.beginPath();
+            ctx.arc(lotusX, lotusY, size * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawSacredLotus(ctx, x, y, size) {
+        const petalCount = 8;
+        for (let i = 0; i < petalCount; i++) {
+            const angle = (i / petalCount) * Math.PI * 2;
+            const petalX = x + Math.cos(angle) * size * 0.6;
+            const petalY = y + Math.sin(angle) * size * 0.6;
+            
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.ellipse(petalX, petalY, size * 0.3, size * 0.15, angle, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    drawGoldenCoins(ctx, width, height, count) {
+        for (let i = 0; i < count; i++) {
+            const coinX = Math.random() * width;
+            const coinY = height * 0.7 + Math.random() * height * 0.2;
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(coinX, coinY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#FFA500';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+    
+    drawSacredKalash(ctx, x, y, size) {
+        ctx.fillStyle = '#B8860B';
+        ctx.beginPath();
+        ctx.arc(x, y + size * 0.2, size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#DAA520';
+        ctx.fillRect(x - size * 0.2, y - size * 0.2, size * 0.4, size * 0.4);
+        
+        ctx.fillStyle = '#228B22';
+        for (let i = 0; i < 5; i++) {
+            const leafX = x - size * 0.15 + (i * size * 0.075);
+            const leafY = y - size * 0.4;
+            ctx.beginPath();
+            ctx.ellipse(leafX, leafY, size * 0.03, size * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawDecoratedCow(ctx, x, y, size) {
+        ctx.fillStyle = '#F5F5DC';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.7, size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.arc(x - size * 0.5, y - size * 0.1, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 5; i++) {
+            const garlandX = x - size * 0.3 + (i * size * 0.15);
+            const garlandY = y - size * 0.2;
+            ctx.beginPath();
+            ctx.arc(garlandX, garlandY, size * 0.04, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawAltarDiyas(ctx, x, y, width) {
+        const diyaCount = 7;
+        for (let i = 0; i < diyaCount; i++) {
+            const diyaX = x - width * 0.5 + (i * width / (diyaCount - 1));
+            
+            ctx.fillStyle = '#CD853F';
+            ctx.beginPath();
+            ctx.arc(diyaX, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.ellipse(diyaX, y - 3, 3, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawProsperityVines(ctx, x, y, width, height) {
+        ctx.strokeStyle = '#228B22';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        
+        const segments = 8;
+        for (let i = 1; i <= segments; i++) {
+            const segmentY = y + (i / segments) * height;
+            const curve = Math.sin((i / segments) * Math.PI * 4) * width * 0.3;
+            ctx.quadraticCurveTo(x + curve, segmentY - height / segments * 0.5, x, segmentY);
+        }
+        ctx.stroke();
+        
+        for (let i = 0; i < 6; i++) {
+            const leafY = y + (i / 5) * height;
+            const leafX = x + Math.sin((i / 5) * Math.PI * 4) * width * 0.3;
+            
+            ctx.fillStyle = '#32CD32';
+            ctx.beginPath();
+            ctx.ellipse(leafX, leafY, width * 0.05, width * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawAltarRangoli(ctx, x, y, width) {
+        const colors = ['#FF6B6B', '#FFD700', '#4ECDC4', '#9C27B0'];
+        const rings = 4;
+        
+        for (let ring = 0; ring < rings; ring++) {
+            const radius = (width / 2) * (ring + 1) / rings;
+            const petals = 8 + ring * 4;
+            
+            ctx.fillStyle = colors[ring];
+            for (let i = 0; i < petals; i++) {
+                const angle = (i / petals) * Math.PI * 2;
+                const petalX = x + Math.cos(angle) * radius;
+                const petalY = y + Math.sin(angle) * radius;
+                
+                ctx.beginPath();
+                ctx.arc(petalX, petalY, width * 0.02, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+    
+    drawTraditionalCourtyard(ctx, x, y, width) {
+        ctx.fillStyle = '#DEB887';
+        ctx.fillRect(x - width * 0.5, y, width, width * 0.6);
+        
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 2;
+        const gridSize = width / 8;
+        for (let i = 0; i <= 8; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x - width * 0.5 + i * gridSize, y);
+            ctx.lineTo(x - width * 0.5 + i * gridSize, y + width * 0.6);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(x - width * 0.5, y + i * gridSize * 0.6);
+            ctx.lineTo(x + width * 0.5, y + i * gridSize * 0.6);
+            ctx.stroke();
+        }
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 12; i++) {
+            const flowerX = x - width * 0.4 + Math.random() * width * 0.8;
+            const flowerY = y + Math.random() * width * 0.6;
+            ctx.beginPath();
+            ctx.arc(flowerX, flowerY, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawDeusiBhailoGroup(ctx, x, y, width) {
+        const colors = ['#FF6B6B', '#4ECDC4', '#FFD700'];
+        for (let i = 0; i < 4; i++) {
+            const personX = x + (i * width * 0.25);
+            const personY = y + Math.sin(i * 0.5) * 10;
+            
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.beginPath();
+            ctx.arc(personX, personY - 20, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillRect(personX - 6, personY - 12, 12, 25);
+            
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(personX, personY + 13);
+            ctx.lineTo(personX - 5, personY + 25);
+            ctx.moveTo(personX, personY + 13);
+            ctx.lineTo(personX + 5, personY + 25);
+            ctx.stroke();
+        }
+    }
+    
+    drawSarangi(ctx, x, y, size) {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x - size * 0.4, y - size * 0.6, size * 0.8, size * 1.2);
+        
+        ctx.fillStyle = '#654321';
+        ctx.beginPath();
+        ctx.ellipse(x, y - size * 0.2, size * 0.35, size * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = '#DDD';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+            const stringY = y - size * 0.5 + (i * size * 0.25);
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.3, stringY);
+            ctx.lineTo(x + size * 0.3, stringY);
+            ctx.stroke();
+        }
+    }
+    
+    drawBansuri(ctx, x, y, size) {
+        ctx.fillStyle = '#D2691E';
+        ctx.fillRect(x - size * 0.1, y - size, size * 0.2, size * 2);
+        
+        ctx.fillStyle = '#8B4513';
+        for (let i = 0; i < 6; i++) {
+            const holeY = y - size * 0.7 + (i * size * 0.25);
+            ctx.beginPath();
+            ctx.arc(x, holeY, size * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawMusicalRhythm(ctx, width, height) {
+        const notes = ['♪', '♫', '♬'];
+        for (let i = 0; i < 12; i++) {
+            const noteX = Math.random() * width;
+            const noteY = height * 0.2 + Math.random() * height * 0.3;
+            
+            ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.random() * 0.5})`;
+            ctx.font = `${16 + Math.random() * 8}px serif`;
+            ctx.fillText(notes[Math.floor(Math.random() * notes.length)], noteX, noteY);
+        }
+    }
+    
+    drawCelebrationLamps(ctx, width, height) {
+        const lampPositions = [
+            { x: width * 0.1, y: height * 0.4 },
+            { x: width * 0.3, y: height * 0.45 },
+            { x: width * 0.5, y: height * 0.42 },
+            { x: width * 0.7, y: height * 0.47 },
+            { x: width * 0.9, y: height * 0.44 }
+        ];
+        
+        lampPositions.forEach(lamp => {
+            ctx.fillStyle = '#CD853F';
+            ctx.beginPath();
+            ctx.arc(lamp.x, lamp.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.ellipse(lamp.x, lamp.y - 4, 3, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+            ctx.beginPath();
+            ctx.arc(lamp.x, lamp.y, 15, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+    
+    drawTiharDog(ctx, x, y, size) {
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.7, size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(x - size * 0.4, y - size * 0.2, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 5; i++) {
+            const garlandX = x - size * 0.3 + (i * size * 0.15);
+            const garlandY = y - size * 0.3;
+            ctx.beginPath();
+            ctx.arc(garlandX, garlandY, size * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.fillStyle = '#DC143C';
+        ctx.beginPath();
+        ctx.arc(x - size * 0.4, y - size * 0.3, size * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    drawTiharCrow(ctx, x, y, size) {
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(x, y, size * 0.8, size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(x - size * 0.5, y - size * 0.1, size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFA500';
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.7, y - size * 0.05);
+        ctx.lineTo(x - size * 0.9, y - size * 0.1);
+        ctx.lineTo(x - size * 0.7, y - size * 0.15);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    drawBhaiTikaCeremony(ctx, x, y, size) {
+        ctx.fillStyle = 'rgba(139, 69, 19, 0.7)';
+        ctx.beginPath();
+        ctx.arc(x - size * 0.3, y - size * 0.3, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x - size * 0.35, y - size * 0.15, size * 0.1, size * 0.4);
+        
+        ctx.fillStyle = 'rgba(160, 82, 45, 0.7)';
+        ctx.beginPath();
+        ctx.arc(x + size * 0.2, y - size * 0.2, size * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x + size * 0.15, y - size * 0.08, size * 0.1, size * 0.3);
+        
+        ctx.fillStyle = '#DC143C';
+        ctx.beginPath();
+        ctx.arc(x + size * 0.2, y - size * 0.25, size * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 3; i++) {
+            const garlandX = x - size * 0.2 + (i * size * 0.2);
+            const garlandY = y + size * 0.1;
+            ctx.beginPath();
+            ctx.arc(garlandX, garlandY, size * 0.03, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawNepaliFlag(ctx, x, y, size) {
+        ctx.fillStyle = '#DC143C';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + size * 0.8, y + size * 0.3);
+        ctx.lineTo(x, y + size * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y + size * 0.6);
+        ctx.lineTo(x + size * 0.6, y + size * 0.8);
+        ctx.lineTo(x, y + size);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#003893';
+        ctx.strokeStyle = '#003893';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x + size * 0.25, y + size * 0.2, size * 0.08, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const rayX = x + size * 0.25 + Math.cos(angle) * size * 0.15;
+            const rayY = y + size * 0.6 + Math.sin(angle) * size * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.25, y + size * 0.6);
+            ctx.lineTo(rayX, rayY);
+            ctx.stroke();
+        }
+    }
+    
+    drawFestivalConfetti(ctx, width, height, baseColor) {
+        for (let i = 0; i < 25; i++) {
+            const confettiX = Math.random() * width;
+            const confettiY = Math.random() * height;
+            const size = 2 + Math.random() * 4;
+            
+            const colors = [baseColor, '#FF6B6B', '#4ECDC4', '#9C27B0', '#FF8C00'];
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            
+            ctx.save();
+            ctx.translate(confettiX, confettiY);
+            ctx.rotate(Math.random() * Math.PI * 2);
+            ctx.fillRect(-size/2, -size/2, size, size);
+            ctx.restore();
+        }
+    }
+    
+    drawStarConstellation(ctx, width, height) {
+        // Create a beautiful star constellation pattern
+        const constellations = [
+            // Big Dipper-like pattern
+            [
+                { x: width * 0.15, y: height * 0.15 },
+                { x: width * 0.2, y: height * 0.18 },
+                { x: width * 0.25, y: height * 0.16 },
+                { x: width * 0.3, y: height * 0.14 },
+                { x: width * 0.32, y: height * 0.2 },
+                { x: width * 0.28, y: height * 0.25 },
+                { x: width * 0.22, y: height * 0.23 }
+            ],
+            // Southern Cross-like pattern
+            [
+                { x: width * 0.7, y: height * 0.12 },
+                { x: width * 0.75, y: height * 0.08 },
+                { x: width * 0.8, y: height * 0.15 },
+                { x: width * 0.72, y: height * 0.2 },
+                { x: width * 0.77, y: height * 0.16 }
+            ]
+        ];
+        
+        // Draw constellation lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1;
+        
+        constellations.forEach(constellation => {
+            ctx.beginPath();
+            constellation.forEach((star, index) => {
+                if (index === 0) {
+                    ctx.moveTo(star.x, star.y);
+                } else {
+                    ctx.lineTo(star.x, star.y);
+                }
+            });
+            ctx.stroke();
+        });
+        
+        // Draw constellation stars (brighter)
+        ctx.fillStyle = '#FFFFFF';
+        constellations.forEach(constellation => {
+            constellation.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add star glow
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFFFFF';
+            });
+        });
+        
+        // Add scattered individual stars
+        for (let i = 0; i < 20; i++) {
+            const starX = Math.random() * width;
+            const starY = Math.random() * (height * 0.4); // Keep stars in upper portion
+            const starSize = 0.5 + Math.random() * 1.5;
+            const brightness = 0.5 + Math.random() * 0.5;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+            ctx.beginPath();
+            ctx.arc(starX, starY, starSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    drawStringLights(ctx, width, height) {
+        // Reduced to 2 light strings for minimalistic approach
+        const stringCount = 2;
+        const lightColors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#9C27B0'];
+        
+        for (let string = 0; string < stringCount; string++) {
+            const stringY = height + (string * height * 0.2);
+            const sag = 12 + string * 8; // Gentler sag for cleaner look
+            
+            // Draw the string/wire (thinner and more subtle)
+            ctx.strokeStyle = 'rgba(139, 69, 19, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, stringY);
+            ctx.quadraticCurveTo(width / 2, stringY + sag, width, stringY);
+            ctx.stroke();
+            
+            // Draw lights along the string (fewer lights per string)
+            const lightCount = 5 + string; // Only 5-6 lights per string
+            for (let i = 0; i <= lightCount; i++) {
+                const t = i / lightCount;
+                // Calculate position along the curve
+                const lightX = t * width;
+                const lightY = stringY + sag * 4 * t * (1 - t); // Parabolic curve
+                
+                // Light bulb body (slightly larger for better visibility with fewer lights)
+                ctx.fillStyle = lightColors[i % lightColors.length];
+                ctx.beginPath();
+                ctx.arc(lightX, lightY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Enhanced glow effect for quality
+                ctx.fillStyle = `rgba(255, 215, 0, 0.25)`;
+                ctx.beginPath();
+                ctx.arc(lightX, lightY, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Light reflection/highlight (more prominent)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(lightX - 1.5, lightY - 1.5, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Reduced hanging elements (only 3 instead of 5)
+        for (let i = 0; i < 3; i++) {
+            const hangX = (i + 1) * (width / 4);
+            const hangY = height + 20;
+            
+            // Small decorative hanging element (slightly larger for better quality)
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(hangX, hangY + 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hanging string
+            ctx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(hangX, hangY);
+            ctx.lineTo(hangX, hangY + 8);
+            ctx.stroke();
+        }
+    }
+    
+    drawDiyaArrangement(ctx, x, y, arrangement) {
+        if (arrangement === 'mandala') {
+            // Circular mandala arrangement of diyas
+            const rings = 3;
+            const center = { x: x * 0.5, y: y * 0.7 };
+            
+            for (let ring = 0; ring < rings; ring++) {
+                const radius = (ring + 1) * 40;
+                const diyaCount = 6 + ring * 4;
+                
+                for (let i = 0; i < diyaCount; i++) {
+                    const angle = (i / diyaCount) * Math.PI * 2;
+                    const diyaX = center.x + Math.cos(angle) * radius;
+                    const diyaY = center.y + Math.sin(angle) * radius;
+                    
+                    // Draw diya
+                    ctx.fillStyle = '#CD853F';
+                    ctx.beginPath();
+                    ctx.arc(diyaX, diyaY, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw flame
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.ellipse(diyaX, diyaY - 4, 2, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glow effect
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(diyaX, diyaY, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        } else if (arrangement === 'line') {
+            // Linear arrangement of diyas
+            const diyaCount = 8;
+            const spacing = 25;
+            const startX = x;
+            const startY = y;
+            
+            for (let i = 0; i < diyaCount; i++) {
+                const diyaX = startX + (i * spacing);
+                const diyaY = startY + Math.sin(i * 0.5) * 5; // Slight wave pattern
+                
+                // Draw diya
+                ctx.fillStyle = '#CD853F';
+                ctx.beginPath();
+                ctx.arc(diyaX, diyaY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw flame
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.ellipse(diyaX, diyaY - 3, 2, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glow effect
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+                ctx.beginPath();
+                ctx.arc(diyaX, diyaY, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+    
     drawFullMoon(ctx, x, y, size) {
         // Moon glow
         ctx.fillStyle = 'rgba(255, 255, 224, 0.3)';
@@ -2209,6 +3755,7 @@ class FestivalCardBuilder {
         // Clear all inputs
         document.getElementById('nameInput').value = '';
         document.getElementById('wishInput').value = '';
+        document.getElementById('wishSelector').value = '';
         document.getElementById('photoInput').value = '';
         
         // Reset font settings to defaults
@@ -2232,6 +3779,9 @@ class FestivalCardBuilder {
         
         // Remove photo
         this.removePhoto();
+        
+        // Reset text positions
+        this.resetTextPositions();
         
         // Update preview
         this.updatePreview();
@@ -2266,7 +3816,12 @@ class FestivalCardBuilder {
                 this.animationManager = new AnimationManager(this);
             }
             
-            // Start animated preview
+            // Always render at least one frame (for when paused)
+            const name = document.getElementById('nameInput').value;
+            const wish = this.getCurrentWish();
+            this.renderPreviewFrame(name, wish);
+            
+            // Start animated preview only if playing
             this.startPreviewAnimation();
             
         } catch (error) {
@@ -2286,7 +3841,7 @@ class FestivalCardBuilder {
                 // Throttle to target FPS for better performance
                 if (currentTime - this.lastPreviewTime >= frameInterval) {
                     const name = document.getElementById('nameInput').value;
-                    const wish = document.getElementById('wishInput').value;
+                    const wish = this.getCurrentWish();
                     
                     // Render animated frame
                     this.renderPreviewFrame(name, wish);
@@ -2369,13 +3924,16 @@ class FestivalCardBuilder {
                 this.renderPreviewKiteFlyingBackground(ctx, width, height, animationTime);
                 break;
             case 'dashain4':
-                this.renderPreviewTempleBackground(ctx, width, height, animationTime);
-                break;
-            case 'tihar3':
-                this.renderPreviewDeepawaliBackground(ctx, width, height, animationTime);
-                break;
-            case 'festival2':
-                this.renderPreviewFestivalLightsBackground(ctx, width, height, animationTime);
+            case 'dashain5':
+                if (this.templateManager && this.templateManager.renderTemplatePreview(template.id, ctx, width, height, animationTime)) {
+                    break;
+                }
+                // Fallback for legacy rendering
+                if (template.id === 'dashain4') {
+                    this.renderPreviewMinimalistDashainBackground(ctx, width, height, animationTime);
+                } else {
+                    this.renderPreviewDurgaGraceBackground(ctx, width, height, animationTime);
+                }
                 break;
             default:
                 // Fallback to static background
@@ -2557,6 +4115,114 @@ class FestivalCardBuilder {
         const cloudOffset = animationTime * 0.3; // Slow cloud movement
         this.drawCloud(ctx, width * 0.2 + cloudOffset * width * 0.1, height * 0.15, width * 0.12);
         this.drawCloud(ctx, width * 0.6 + cloudOffset * width * 0.05, height * 0.08, width * 0.08);
+    }
+    
+    renderPreviewMinimalistDashainBackground(ctx, width, height, animationTime) {
+        // Static minimalist background
+        this.renderMinimalistDashainBackground(ctx, width, height, false);
+        
+        // Subtle glow animation on Om symbol
+        ctx.save();
+        const glowIntensity = 0.05 + Math.sin(animationTime * Math.PI * 2) * 0.03;
+        ctx.globalAlpha = glowIntensity;
+        ctx.shadowColor = '#dc3545';
+        ctx.shadowBlur = 20;
+        ctx.font = `${width * 0.25}px serif`;
+        ctx.fillStyle = '#dc3545';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ॐ', width / 2, height * 0.35);
+        ctx.restore();
+        
+        // Gentle floating particles
+        const particleTime = animationTime * Math.PI;
+        for (let i = 0; i < 3; i++) {
+            const x = width * (0.3 + i * 0.2) + Math.sin(particleTime + i) * 20;
+            const y = height * (0.7 + Math.sin(particleTime * 0.7 + i) * 0.1);
+            const alpha = 0.1 + Math.sin(particleTime + i) * 0.05;
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#ffc107';
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+    
+    renderPreviewDurgaGraceBackground(ctx, width, height, animationTime) {
+        // Static Durga background
+        this.renderDurgaGraceBackground(ctx, width, height, false);
+        
+        // Subtle divine light animation around the Durga silhouette
+        const centerX = width / 2;
+        const centerY = height * 0.4;
+        const lightRadius = width * 0.2;
+        
+        ctx.save();
+        const lightIntensity = 0.08 + Math.sin(animationTime * Math.PI * 1.5) * 0.04;
+        ctx.globalAlpha = lightIntensity;
+        
+        // Gentle radial glow
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, lightRadius);
+        gradient.addColorStop(0, '#d4691a');
+        gradient.addColorStop(0.5, 'rgba(212, 105, 26, 0.3)');
+        gradient.addColorStop(1, 'rgba(212, 105, 26, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+        
+        // Floating divine sparkles
+        const sparkleTime = animationTime * Math.PI * 0.8;
+        for (let i = 0; i < 5; i++) {
+            const angle = sparkleTime + i * (Math.PI * 2 / 5);
+            const radius = lightRadius * 0.7 + Math.sin(sparkleTime * 1.3 + i) * 20;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius * 0.6;
+            const alpha = 0.2 + Math.sin(animationTime * Math.PI * 2.2 + i) * 0.15;
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#ffc107';
+            ctx.shadowColor = '#ffc107';
+            ctx.shadowBlur = 8;
+            
+            // Small star shape
+            this.drawMiniStar(ctx, x, y, 3);
+            ctx.restore();
+        }
+        
+        // Breathing effect on "दुर्गा" text
+        ctx.save();
+        const textGlow = 0.12 + Math.sin(animationTime * Math.PI * 1.2) * 0.06;
+        ctx.globalAlpha = textGlow;
+        ctx.font = `${width * 0.08}px serif`;
+        ctx.fillStyle = '#d4691a';
+        ctx.shadowColor = '#d4691a';
+        ctx.shadowBlur = 10;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('दुर्गा', width / 2, height * 0.75);
+        ctx.restore();
+    }
+    
+    drawMiniStar(ctx, x, y, radius) {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+            const x1 = x + Math.cos(angle) * radius;
+            const y1 = y + Math.sin(angle) * radius;
+            const x2 = x + Math.cos(angle + Math.PI / 5) * radius * 0.4;
+            const y2 = y + Math.sin(angle + Math.PI / 5) * radius * 0.4;
+            
+            if (i === 0) ctx.moveTo(x1, y1);
+            else ctx.lineTo(x1, y1);
+            ctx.lineTo(x2, y2);
+        }
+        ctx.closePath();
+        ctx.fill();
     }
     
     drawAnimatedKiteByType(ctx, type, x, y, size, primaryColor, secondaryColor, rotation) {
@@ -2743,7 +4409,7 @@ class FestivalCardBuilder {
         this.ctx.shadowBlur = 0; // No shadow
         this.ctx.shadowColor = 'transparent';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', baseWidth / 2, baseHeight - 10); // Closer to bottom
+        // this.ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', baseWidth / 2, baseHeight - 10); // Closer to bottom
         
         // Reset shadow and stroke
         this.ctx.shadowBlur = 0;
@@ -2776,13 +4442,16 @@ class FestivalCardBuilder {
                 this.renderKiteFlyingBackground(this.ctx, width, height, false);
                 break;
             case 'dashain4':
-                this.renderTempleBackground(this.ctx, width, height, false);
-                break;
-            case 'tihar3':
-                this.renderDeepawaliBackground(this.ctx, width, height, false);
-                break;
-            case 'festival2':
-                this.renderFestivalLightsBackground(this.ctx, width, height, false);
+            case 'dashain5':
+                if (this.templateManager && this.templateManager.renderTemplate(this.currentTemplate.id, this.ctx, width, height)) {
+                    break;
+                }
+                // Fallback for legacy rendering
+                if (this.currentTemplate.id === 'dashain4') {
+                    this.renderMinimalistDashainBackground(this.ctx, width, height, false);
+                } else {
+                    this.renderDurgaGraceBackground(this.ctx, width, height, false);
+                }
                 break;
             default:
                 // Simple gradient fallback
@@ -2948,13 +4617,18 @@ class FestivalCardBuilder {
             this.ctx.shadowOffsetX = 2;
             this.ctx.shadowOffsetY = 2;
             
-            const nameY = this.uploadedPhoto ? 280 : 200;
+            // Use drag position or default position
+            const namePos = this.getTextPosition('name');
+            const displayScale = baseWidth / this.canvas.width; // Scale from internal canvas to display size
+            const nameX = namePos.x * displayScale;
+            const nameY = namePos.y * displayScale;
+            
             
             // Add gold outline to name text
             this.ctx.strokeStyle = '#FFD700';
             this.ctx.lineWidth = 2;
-            this.ctx.strokeText(name, baseWidth / 2, nameY);
-            this.ctx.fillText(name, baseWidth / 2, nameY);
+            this.ctx.strokeText(name, nameX, nameY);
+            this.ctx.fillText(name, nameX, nameY);
         }
         
         // Draw wish text
@@ -2966,9 +4640,15 @@ class FestivalCardBuilder {
             this.ctx.font = `${fontStyle}${fontWeight}${wishFontSize}px ${this.fontSettings.family}`;
             this.ctx.shadowBlur = 3;
             this.ctx.fillStyle = this.fontSettings.color;
-            const nameY = this.uploadedPhoto ? 280 : 200;
-            const wishY = (name && name.trim()) ? nameY + 60 : nameY;
-            this.wrapText(wish, baseWidth / 2, wishY, baseWidth - 40, wishFontSize + 7);
+            
+            // Use drag position or default position
+            const wishPos = this.getTextPosition('wish');
+            const displayScale = baseWidth / this.canvas.width;
+            const wishX = wishPos.x * displayScale;
+            const wishY = wishPos.y * displayScale;
+            
+            
+            this.wrapText(wish, wishX, wishY, baseWidth - 40, wishFontSize + 7);
         }
         
         // Draw watermark
@@ -3026,13 +4706,17 @@ class FestivalCardBuilder {
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
             
-            const nameY = this.uploadedPhoto ? 280 : 200;
+            // Use drag position or default position
+            const namePos = this.getTextPosition('name');
+            const displayScale = baseWidth / this.canvas.width;
+            const nameX = namePos.x * displayScale;
+            const nameY = namePos.y * displayScale;
             
             // Add gold outline to name text
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 2;
-            ctx.strokeText(name, baseWidth / 2, nameY);
-            ctx.fillText(name, baseWidth / 2, nameY);
+            ctx.strokeText(name, nameX, nameY);
+            ctx.fillText(name, nameX, nameY);
         }
         
         // Draw wish text
@@ -3044,9 +4728,14 @@ class FestivalCardBuilder {
             ctx.font = `${fontStyle}${fontWeight}${wishFontSize}px ${this.fontSettings.family}`;
             ctx.shadowBlur = 3;
             ctx.fillStyle = this.fontSettings.color;
-            const nameY = this.uploadedPhoto ? 280 : 200;
-            const wishY = (name && name.trim()) ? nameY + 60 : nameY;
-            this.wrapTextOnCanvas(ctx, wish, baseWidth / 2, wishY, baseWidth - 40, wishFontSize + 7);
+            
+            // Use drag position or default position
+            const wishPos = this.getTextPosition('wish');
+            const displayScale = baseWidth / this.canvas.width;
+            const wishX = wishPos.x * displayScale;
+            const wishY = wishPos.y * displayScale;
+            
+            this.wrapTextOnCanvas(ctx, wish, wishX, wishY, baseWidth - 40, wishFontSize + 7);
         }
         
         // Draw watermark
@@ -3099,7 +4788,7 @@ class AnimationManager {
         
         // Get card data
         const name = document.getElementById('nameInput').value;
-        const wish = document.getElementById('wishInput').value;
+        const wish = this.cardBuilder.getCurrentWish();
         
         // Render animated frame and return canvas
         const canvas = await this.renderAnimatedFrame(name, wish);
@@ -3151,13 +4840,16 @@ class AnimationManager {
                 this.renderAnimatedKiteFlyingBackground(ctx, width, height);
                 break;
             case 'dashain4':
-                this.renderAnimatedTempleBackground(ctx, width, height);
-                break;
-            case 'tihar3':
-                this.renderAnimatedDeepawaliBackground(ctx, width, height);
-                break;
-            case 'festival2':
-                this.renderAnimatedFestivalLightsBackground(ctx, width, height);
+            case 'dashain5':
+                if (this.cardBuilder.templateManager && this.cardBuilder.templateManager.renderTemplateAnimated(template.id, ctx, width, height, this.animationTime)) {
+                    break;
+                }
+                // Fallback for legacy rendering
+                if (template.id === 'dashain4') {
+                    this.renderAnimatedMinimalistDashainBackground(ctx, width, height);
+                } else {
+                    this.renderAnimatedDurgaGraceBackground(ctx, width, height);
+                }
                 break;
             default:
                 // Fallback to static background
@@ -3341,6 +5033,130 @@ class AnimationManager {
         const cloudOffset = this.animationTime * 0.3; // Slow cloud movement
         this.cardBuilder.drawCloud(ctx, width * 0.2 + cloudOffset * width * 0.1, height * 0.15, width * 0.12);
         this.cardBuilder.drawCloud(ctx, width * 0.6 + cloudOffset * width * 0.05, height * 0.08, width * 0.08);
+    }
+
+    renderAnimatedMinimalistDashainBackground(ctx, width, height) {
+        // Static minimalist background
+        this.cardBuilder.renderMinimalistDashainBackground(ctx, width, height, false);
+        
+        // Subtle breathing glow on Om symbol
+        const breathingIntensity = 0.08 + Math.sin(this.animationTime * Math.PI) * 0.05;
+        ctx.save();
+        ctx.globalAlpha = breathingIntensity;
+        ctx.shadowColor = '#dc3545';
+        ctx.shadowBlur = 25;
+        ctx.font = `${width * 0.25}px serif`;
+        ctx.fillStyle = '#dc3545';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ॐ', width / 2, height * 0.35);
+        ctx.restore();
+        
+        // Gentle floating light particles (very minimal)
+        const particleTime = this.animationTime * Math.PI * 0.5;
+        for (let i = 0; i < 4; i++) {
+            const angle = particleTime + i * Math.PI / 2;
+            const radius = 30 + Math.sin(this.animationTime * Math.PI * 1.5 + i) * 15;
+            const x = width / 2 + Math.cos(angle) * radius;
+            const y = height * 0.35 + Math.sin(angle) * radius;
+            const alpha = 0.15 + Math.sin(this.animationTime * Math.PI * 2 + i) * 0.1;
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#ffc107';
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Subtle lotus glow animation in corners
+        const lotusGlow = 0.05 + Math.sin(this.animationTime * Math.PI * 1.2) * 0.03;
+        ctx.save();
+        ctx.globalAlpha = lotusGlow;
+        ctx.shadowColor = '#dc3545';
+        ctx.shadowBlur = 15;
+        this.cardBuilder.drawMinimalLotus(ctx, width * 0.1, height * 0.9, width * 0.08);
+        this.cardBuilder.drawMinimalLotus(ctx, width * 0.9, height * 0.9, width * 0.08);
+        this.cardBuilder.drawMinimalLotus(ctx, width * 0.1, height * 0.1, width * 0.08);
+        this.cardBuilder.drawMinimalLotus(ctx, width * 0.9, height * 0.1, width * 0.08);
+        ctx.restore();
+    }
+
+    renderAnimatedDurgaGraceBackground(ctx, width, height) {
+        // Static Durga background
+        this.cardBuilder.renderDurgaGraceBackground(ctx, width, height, false);
+        
+        // Divine energy emanation animation
+        const centerX = width / 2;
+        const centerY = height * 0.4;
+        const lightRadius = width * 0.25;
+        
+        // Pulsing divine aura
+        const pulseIntensity = 0.1 + Math.sin(this.animationTime * Math.PI * 1.2) * 0.06;
+        ctx.save();
+        ctx.globalAlpha = pulseIntensity;
+        
+        // Multiple layers of divine light
+        for (let layer = 0; layer < 3; layer++) {
+            const layerRadius = lightRadius * (0.4 + layer * 0.3);
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, layerRadius);
+            gradient.addColorStop(0, '#d4691a');
+            gradient.addColorStop(0.3, 'rgba(212, 105, 26, 0.2)');
+            gradient.addColorStop(1, 'rgba(212, 105, 26, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+        }
+        ctx.restore();
+        
+        // Orbiting divine sparkles (more elaborate than preview)
+        const orbitalTime = this.animationTime * Math.PI * 0.6;
+        for (let orbit = 0; orbit < 2; orbit++) {
+            const orbitRadius = lightRadius * (0.6 + orbit * 0.2);
+            const numSparkles = 6 + orbit * 2;
+            
+            for (let i = 0; i < numSparkles; i++) {
+                const angle = orbitalTime * (1 + orbit * 0.3) + i * (Math.PI * 2 / numSparkles);
+                const x = centerX + Math.cos(angle) * orbitRadius;
+                const y = centerY + Math.sin(angle) * orbitRadius * 0.7;
+                const alpha = 0.25 + Math.sin(this.animationTime * Math.PI * 2.5 + i) * 0.15;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = orbit === 0 ? '#ffc107' : '#ff8c00';
+                ctx.shadowColor = orbit === 0 ? '#ffc107' : '#ff8c00';
+                ctx.shadowBlur = 12;
+                
+                this.cardBuilder.drawMiniStar(ctx, x, y, 2 + orbit);
+                ctx.restore();
+            }
+        }
+        
+        // Enhanced breathing effect on "दुर्गा" text with divine glow
+        ctx.save();
+        const textPulse = 0.15 + Math.sin(this.animationTime * Math.PI) * 0.08;
+        ctx.globalAlpha = textPulse;
+        ctx.font = `${width * 0.08}px serif`;
+        ctx.fillStyle = '#d4691a';
+        ctx.shadowColor = '#d4691a';
+        ctx.shadowBlur = 15;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('दुर्गा', width / 2, height * 0.75);
+        ctx.restore();
+        
+        // Subtle trident glow animation
+        const tridentGlow = 0.08 + Math.sin(this.animationTime * Math.PI * 0.8) * 0.04;
+        ctx.save();
+        ctx.globalAlpha = tridentGlow;
+        ctx.shadowColor = '#d4691a';
+        ctx.shadowBlur = 8;
+        this.cardBuilder.drawMinimalTrident(ctx, width * 0.12, height * 0.12, width * 0.06);
+        this.cardBuilder.drawMinimalTrident(ctx, width * 0.88, height * 0.12, width * 0.06);
+        this.cardBuilder.drawMinimalTrident(ctx, width * 0.12, height * 0.88, width * 0.06);
+        this.cardBuilder.drawMinimalTrident(ctx, width * 0.88, height * 0.88, width * 0.06);
+        ctx.restore();
     }
 
     renderAnimatedTempleBackground(ctx, width, height) {

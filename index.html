@@ -88,8 +88,33 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="wishInput" id="wishLabel">Custom Wish (Optional):</label>
-                            <textarea id="wishInput" placeholder="Enter your personalized wish"></textarea>
+                            <label for="wishSelector" id="wishSelectorLabel">Choose Your Wish:</label>
+                            <div class="wish-selection-container">
+                                <div class="wish-type-selector">
+                                    <button type="button" id="predefinedWishBtn" class="wish-type-btn active">Select from Messages</button>
+                                    <button type="button" id="customWishBtn" class="wish-type-btn">Write Custom</button>
+                                </div>
+                                
+                                <div id="predefinedWishSection" class="wish-section active">
+                                    <select id="wishSelector">
+                                        <option value="">Select a traditional message...</option>
+                                        <option value="en1">May this blessed Dashain bring happiness, prosperity and good health to you and your family!</option>
+                                        <option value="en2">Wishing you a joyous Dashain filled with love, laughter and divine blessings!</option>
+                                        <option value="en3">May Goddess Durga shower you with strength, wisdom and endless happiness this Dashain!</option>
+                                        <option value="en4">Happy Dashain! May this festival of victory illuminate your path to success and joy!</option>
+                                        <option value="en5">Sending warm Dashain wishes for peace, prosperity and wonderful moments with loved ones!</option>
+                                        <option value="ne1">दशैंको यो पावन पर्वले तपाईंको जीवनमा खुशी, शान्ति र समृद्धि ल्याओस्!</option>
+                                        <option value="ne2">विजया दशमीको हार्दिक शुभकामना! माँ दुर्गाको आशीर्वाद सधैं तपाईंमाथि रहोस्!</option>
+                                        <option value="ne3">यो दशैंले तपाईंको घर-परिवारमा सुख, समृद्धि र उत्साहको वातावरण ल्याओस्!</option>
+                                        <option value="ne4">दशैंको तिहारको हार्दिक मंगलमय शुभकामना! जीवनमा नयाँ उमंग र उत्साह आओस्!</option>
+                                        <option value="ne5">शुभ दशैं! यस महान पर्वले तपाईंका सबै मनोकामना पूर्ण गरोस्!</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="customWishSection" class="wish-section">
+                                    <textarea id="wishInput" placeholder="Enter your personalized wish"></textarea>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-group">
@@ -196,6 +221,10 @@
         </div>
     </div>
 
+    <!-- Load modular templates -->
+    <script src="templates/dashain4-peaceful-blessings.js"></script>
+    <script src="templates/dashain5-durga-grace.js"></script>
+    <script src="templates/template-manager.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
