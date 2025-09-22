@@ -132,7 +132,11 @@ class FestivalCardBuilder {
         document.getElementById('langToggle2').addEventListener('click', () => this.toggleLanguage());
         
         // Form inputs
-        document.getElementById('nameInput').addEventListener('input', () => this.updatePreview());
+        document.getElementById('nameInput').addEventListener('input', () => {
+            // Only clean up GIF resources, not preview
+            this.cleanupGifResources(false);
+            this.updatePreview();
+        });
         // Wish input listener is now handled in setupWishSelection()
         document.getElementById('photoInput').addEventListener('change', (e) => this.handlePhotoUpload(e));
         
@@ -339,6 +343,7 @@ class FestivalCardBuilder {
             if (wishSelector.value) {
                 // Clear custom wish input when predefined is selected
                 wishInput.value = '';
+                this.cleanupGifResources(false);
                 this.updatePreview();
             }
         });
@@ -349,6 +354,7 @@ class FestivalCardBuilder {
                 // Clear predefined selection when custom text is entered
                 wishSelector.value = '';
             }
+            this.cleanupGifResources(false);
             this.updatePreview();
         });
     }
@@ -387,6 +393,31 @@ class FestivalCardBuilder {
         }
         
         return { x: baseWidth / 2, y: baseHeight / 2 };
+    }
+    
+    getTextPositionForGif(textType, targetWidth, targetHeight) {
+        const position = this.textPositions[textType];
+        if (position.x !== null && position.y !== null) {
+            // Scale existing position from main canvas to GIF canvas
+            const scaleX = targetWidth / this.canvas.width;
+            const scaleY = targetHeight / this.canvas.height;
+            return { 
+                x: position.x * scaleX, 
+                y: position.y * scaleY 
+            };
+        }
+        
+        // Return default position for GIF dimensions
+        if (textType === 'name') {
+            const nameY = this.uploadedPhoto ? 280 : 200;
+            return { x: targetWidth / 2, y: nameY };
+        } else if (textType === 'wish') {
+            const nameY = this.uploadedPhoto ? 280 : 200;
+            const wishY = nameY + 60;
+            return { x: targetWidth / 2, y: wishY };
+        }
+        
+        return { x: targetWidth / 2, y: targetHeight / 2 };
     }
     
     resetTextPositions() {
@@ -3747,6 +3778,9 @@ class FestivalCardBuilder {
     }
     
     async selectTemplate(templateId) {
+        // Clean up any existing animation resources (including preview since template changed)
+        this.cleanupGifResources(true);
+        
         // Remove previous selection
         document.querySelectorAll('.template-item').forEach(item => {
             item.classList.remove('selected');
@@ -3769,6 +3803,65 @@ class FestivalCardBuilder {
         this.updatePreview();
     }
     
+    cleanupAnimationResources() {
+        this.cleanupGifResources(false); // Don't clear preview
+    }
+    
+    cleanupGifResources(clearPreview = false) {
+        try {
+            // Reset generation state
+            this.isGeneratingGif = false;
+            
+            // Clean up animation manager
+            if (this.animationManager) {
+                this.animationManager.reset();
+                this.animationManager = null;
+            }
+            
+            // Clean up GIF exporter
+            if (this.gifExporter) {
+                this.gifExporter = null;
+            }
+            
+            // Only clear preview if explicitly requested
+            if (clearPreview) {
+                // Stop any running preview animations
+                if (this.previewAnimationId) {
+                    cancelAnimationFrame(this.previewAnimationId);
+                    this.previewAnimationId = null;
+                }
+                
+                // Clear canvas and reset context state
+                if (this.ctx) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.save();
+                    this.ctx.restore();
+                }
+                
+                // Reset text positions only if they're not being dragged
+                if (!this.isDragging) {
+                    this.textPositions = {
+                        name: { x: null, y: null },
+                        wish: { x: null, y: null }
+                    };
+                }
+                
+                // Clear any template-specific cached data
+                if (this.templateManager) {
+                    this.templateManager.templates.forEach(template => {
+                        if (template.reset && typeof template.reset === 'function') {
+                            template.reset();
+                        }
+                    });
+                }
+            }
+            
+            console.log('GIF resources cleaned up' + (clearPreview ? ' (including preview)' : ''));
+        } catch (error) {
+            console.warn('Error during resource cleanup:', error);
+        }
+    }
+    
     handlePhotoUpload(event) {
         const file = event.target.files[0];
         if (file && file.type.startsWith('image/')) {
@@ -3778,6 +3871,7 @@ class FestivalCardBuilder {
                 img.onload = () => {
                     this.uploadedPhoto = img;
                     document.getElementById('removePhotoBtn').style.display = 'block';
+                    this.cleanupGifResources(false);
                     this.updatePreview();
                 };
                 img.src = e.target.result;
@@ -3790,6 +3884,7 @@ class FestivalCardBuilder {
         this.uploadedPhoto = null;
         document.getElementById('photoInput').value = '';
         document.getElementById('removePhotoBtn').style.display = 'none';
+        this.cleanupGifResources(false);
         this.updatePreview();
     }
     
@@ -3825,6 +3920,9 @@ class FestivalCardBuilder {
         // Reset text positions
         this.resetTextPositions();
         
+        // Clean up animation resources including preview (since resetting everything)
+        this.cleanupGifResources(true);
+        
         // Update preview
         this.updatePreview();
     }
@@ -3837,12 +3935,15 @@ class FestivalCardBuilder {
             document.getElementById('fontSizeValue').textContent = value + 'px';
         }
         
+        // Clean up GIF resources when font changes, but keep preview
+        this.cleanupGifResources(false);
         this.updatePreview();
     }
     
     toggleFontStyle(style) {
         this.fontSettings[style] = !this.fontSettings[style];
         document.getElementById(style + 'Btn').classList.toggle('active', this.fontSettings[style]);
+        this.cleanupGifResources(false);
         this.updatePreview();
     }
     
@@ -4658,8 +4759,8 @@ class FestivalCardBuilder {
             console.error('Error generating GIF:', error);
             alert('Error generating GIF. Please try again.');
         } finally {
-            // Reset generation state
-            this.isGeneratingGif = false;
+            // Clean up GIF resources without affecting preview
+            this.cleanupGifResources(false);
             
             // Re-enable button and hide progress
             document.getElementById('downloadGifBtn').disabled = false;
@@ -4802,11 +4903,10 @@ class FestivalCardBuilder {
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
             
-            // Use drag position or default position
-            const namePos = this.getTextPosition('name');
-            const displayScale = baseWidth / this.canvas.width;
-            const nameX = namePos.x * displayScale;
-            const nameY = namePos.y * displayScale;
+            // Use drag position or default position for GIF canvas
+            const namePos = this.getTextPositionForGif('name', baseWidth, baseHeight);
+            const nameX = namePos.x;
+            const nameY = namePos.y;
             
             // Add gold outline to name text
             ctx.strokeStyle = '#FFD700';
@@ -4825,11 +4925,10 @@ class FestivalCardBuilder {
             ctx.shadowBlur = 3;
             ctx.fillStyle = this.fontSettings.color;
             
-            // Use drag position or default position
-            const wishPos = this.getTextPosition('wish');
-            const displayScale = baseWidth / this.canvas.width;
-            const wishX = wishPos.x * displayScale;
-            const wishY = wishPos.y * displayScale;
+            // Use drag position or default position for GIF canvas
+            const wishPos = this.getTextPositionForGif('wish', baseWidth, baseHeight);
+            const wishX = wishPos.x;
+            const wishY = wishPos.y;
             
             this.wrapTextOnCanvas(ctx, wish, wishX, wishY, baseWidth - 40, wishFontSize + 7);
         }
@@ -4879,16 +4978,26 @@ class AnimationManager {
     }
     
     async renderFrame(frameNumber) {
-        this.frameCount = frameNumber;
-        this.animationTime = frameNumber / this.totalFrames;
-        
-        // Get card data
-        const name = document.getElementById('nameInput').value;
-        const wish = this.cardBuilder.getCurrentWish();
-        
-        // Render animated frame and return canvas
-        const canvas = await this.renderAnimatedFrame(name, wish);
-        return canvas;
+        try {
+            this.frameCount = frameNumber;
+            this.animationTime = frameNumber / this.totalFrames;
+            
+            // Get card data
+            const name = document.getElementById('nameInput').value;
+            const wish = this.cardBuilder.getCurrentWish();
+            
+            // Add timeout protection for frame rendering
+            const framePromise = this.renderAnimatedFrame(name, wish);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error(`Frame ${frameNumber} rendering timeout`)), 5000)
+            );
+            
+            const canvas = await Promise.race([framePromise, timeoutPromise]);
+            return canvas;
+        } catch (error) {
+            console.error(`Error rendering frame ${frameNumber}:`, error);
+            throw error;
+        }
     }
     
     reset() {
@@ -4903,28 +5012,33 @@ class AnimationManager {
     }
     
     async renderAnimatedFrame(name, wish) {
-        // Create a separate canvas for GIF generation with correct dimensions
-        if (!this.gifCanvas) {
-            this.gifCanvas = document.createElement('canvas');
-            this.gifCanvas.width = 400;
-            this.gifCanvas.height = 600;
-            this.gifCtx = this.gifCanvas.getContext('2d');
+        try {
+            // Create a separate canvas for GIF generation with correct dimensions
+            if (!this.gifCanvas) {
+                this.gifCanvas = document.createElement('canvas');
+                this.gifCanvas.width = 400;
+                this.gifCanvas.height = 600;
+                this.gifCtx = this.gifCanvas.getContext('2d');
+            }
+            
+            const ctx = this.gifCtx;
+            const baseWidth = 400;
+            const baseHeight = 600;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, baseWidth, baseHeight);
+            
+            // Render animated background on GIF canvas
+            await this.renderAnimatedBackground();
+            
+            // Draw static elements (photo, text) on GIF canvas
+            await this.cardBuilder.renderStaticElementsOnCanvas(this.gifCanvas, this.gifCtx, name, wish);
+            
+            return this.gifCanvas;
+        } catch (error) {
+            console.error('Error in renderAnimatedFrame:', error);
+            throw error;
         }
-        
-        const ctx = this.gifCtx;
-        const baseWidth = 400;
-        const baseHeight = 600;
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, baseWidth, baseHeight);
-        
-        // Render animated background on GIF canvas
-        await this.renderAnimatedBackground();
-        
-        // Draw static elements (photo, text) on GIF canvas
-        await this.cardBuilder.renderStaticElementsOnCanvas(this.gifCanvas, this.gifCtx, name, wish);
-        
-        return this.gifCanvas;
     }
     
     async renderAnimatedBackground() {
@@ -4965,8 +5079,13 @@ class AnimationManager {
                 }
                 break;
             default:
-                // Fallback to static background
-                await this.cardBuilder.renderTemplateBackground();
+                // Fallback to simple gradient on GIF canvas
+                console.warn('Unknown template for animation:', template.id);
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, '#dc143c');
+                gradient.addColorStop(1, '#ff6347');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
         }
         
         // Restore context state
@@ -5391,32 +5510,47 @@ class GIFExporter {
                 const images = [];
                 
                 for (let frame = 0; frame < totalFrames; frame++) {
-                    // Update progress
-                    const frameProgress = (frame / totalFrames) * 80; // 80% for frame generation
-                    document.getElementById('progressFill').style.width = frameProgress + '%';
-                    document.getElementById('progressText').textContent = `Generating frames... ${frame + 1}/${totalFrames}`;
-                    
-                    console.log(`Generating frame ${frame + 1}/${totalFrames}`);
-                    
-                    // Render frame
-                    const canvas = await animationManager.renderFrame(frame);
-                    
-                    if (!canvas) {
-                        throw new Error(`Failed to render frame ${frame}`);
+                    try {
+                        // Update progress
+                        const frameProgress = (frame / totalFrames) * 80; // 80% for frame generation
+                        document.getElementById('progressFill').style.width = frameProgress + '%';
+                        document.getElementById('progressText').textContent = `Generating frames... ${frame + 1}/${totalFrames}`;
+                        
+                        console.log(`Starting frame ${frame + 1}/${totalFrames}`);
+                        
+                        // Render frame with timeout
+                        const frameStartTime = Date.now();
+                        const canvas = await animationManager.renderFrame(frame);
+                        const frameEndTime = Date.now();
+                        
+                        console.log(`Frame ${frame + 1} rendered in ${frameEndTime - frameStartTime}ms`);
+                        
+                        if (!canvas) {
+                            throw new Error(`Failed to render frame ${frame + 1}`);
+                        }
+                        
+                        // Convert canvas to data URL
+                        const conversionStartTime = Date.now();
+                        const dataURL = canvas.toDataURL('image/png');
+                        const conversionEndTime = Date.now();
+                        
+                        console.log(`Frame ${frame + 1} converted to data URL in ${conversionEndTime - conversionStartTime}ms`);
+                        
+                        images.push(dataURL);
+                        
+                        // Clear canvas after conversion to free memory
+                        if (canvas && canvas.getContext) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                        
+                        // Allow UI to update
+                        await new Promise(resolve => setTimeout(resolve, 1));
+                        
+                    } catch (frameError) {
+                        console.error(`Error generating frame ${frame + 1}:`, frameError);
+                        throw new Error(`Failed to generate frame ${frame + 1}: ${frameError.message}`);
                     }
-                    
-                    // Convert canvas to data URL
-                    const dataURL = canvas.toDataURL('image/png');
-                    images.push(dataURL);
-                    
-                    // Clear canvas after conversion to free memory
-                    if (canvas && canvas.getContext) {
-                        const ctx = canvas.getContext('2d');
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    }
-                    
-                    // Allow UI to update
-                    await new Promise(resolve => setTimeout(resolve, 5));
                 }
                 
                 console.log('All frames generated, creating GIF...');
