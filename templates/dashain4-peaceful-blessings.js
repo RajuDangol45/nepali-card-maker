@@ -79,6 +79,14 @@ class PeacefulBlessingsTemplate {
             ctx.fill();
             ctx.restore();
         }
+        
+        // Add disclaimer for preview
+        ctx.font = '8px Arial';
+        ctx.fillStyle = 'rgba(108, 117, 125, 0.4)';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.textAlign = 'center';
+        ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', width / 2, height - 10);
     }
 
     renderAnimated(ctx, width, height, animationTime) {

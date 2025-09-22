@@ -441,7 +441,9 @@ class FestivalCardBuilder {
     goToBuilder() {
         document.getElementById('landing').classList.remove('active');
         document.getElementById('builder').classList.add('active');
-        this.selectTemplate(this.templates[0].id);
+        if (this.templates && this.templates.length > 0 && this.templates[0].id) {
+            this.selectTemplate(this.templates[0].id);
+        }
     }
     
     goToLanding() {
@@ -458,29 +460,34 @@ class FestivalCardBuilder {
     updateLanguage() {
         const t = this.translations[this.currentLanguage];
         
-        document.getElementById('mainTitle').textContent = t.mainTitle;
-        document.getElementById('subtitle').textContent = t.subtitle;
-        document.getElementById('description').textContent = t.description;
-        document.getElementById('ctaText').textContent = t.ctaText;
-        document.getElementById('builderTitle').textContent = t.builderTitle;
-        document.getElementById('templatesTitle').textContent = t.templatesTitle;
-        document.getElementById('customizeTitle').textContent = t.customizeTitle;
-        document.getElementById('nameLabel').textContent = t.nameLabel;
-        document.getElementById('wishSelectorLabel').textContent = t.wishSelectorLabel;
-        document.getElementById('photoLabel').textContent = t.photoLabel;
-        document.getElementById('previewTitle').textContent = t.previewTitle;
-        document.getElementById('downloadText').textContent = t.downloadText;
-        document.getElementById('downloadGifText').textContent = t.downloadGifText;
-        document.getElementById('shareText').textContent = t.shareText;
-        document.getElementById('shareModalTitle').textContent = t.shareModalTitle;
-        document.getElementById('daysLabel').textContent = t.daysLabel;
-        document.getElementById('hoursLabel').textContent = t.hoursLabel;
-        document.getElementById('minutesLabel').textContent = t.minutesLabel;
-        document.getElementById('secondsLabel').textContent = t.secondsLabel;
+        const setTextContent = (id, text) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = text;
+        };
+        
+        setTextContent('mainTitle', t.mainTitle);
+        setTextContent('subtitle', t.subtitle);
+        setTextContent('description', t.description);
+        setTextContent('ctaText', t.ctaText);
+        setTextContent('builderTitle', t.builderTitle);
+        setTextContent('templatesTitle', t.templatesTitle);
+        setTextContent('customizeTitle', t.customizeTitle);
+        setTextContent('nameLabel', t.nameLabel);
+        setTextContent('wishSelectorLabel', t.wishSelectorLabel);
+        setTextContent('photoLabel', t.photoLabel);
+        setTextContent('previewTitle', t.previewTitle);
+        setTextContent('downloadText', t.downloadText);
+        setTextContent('downloadGifText', t.downloadGifText);
+        setTextContent('shareText', t.shareText);
+        setTextContent('shareModalTitle', t.shareModalTitle);
+        setTextContent('daysLabel', t.daysLabel);
+        setTextContent('hoursLabel', t.hoursLabel);
+        setTextContent('minutesLabel', t.minutesLabel);
+        setTextContent('secondsLabel', t.secondsLabel);
         
         // Update language toggle buttons
-        document.getElementById('langToggle').textContent = this.currentLanguage === 'en' ? 'नेपाली' : 'English';
-        document.getElementById('langToggle2').textContent = this.currentLanguage === 'en' ? 'नेपाली' : 'English';
+        setTextContent('langToggle', this.currentLanguage === 'en' ? 'नेपाली' : 'English');
+        setTextContent('langToggle2', this.currentLanguage === 'en' ? 'नेपाली' : 'English');
         
         // Update placeholders
         const nameInput = document.getElementById('nameInput');
@@ -490,43 +497,72 @@ class FestivalCardBuilder {
         wishInput.placeholder = this.currentLanguage === 'en' ? 'Enter your personalized wish' : 'आफ्नो व्यक्तिगत शुभकामना लेख्नुहोस्';
         
         // Update new control labels
-        document.getElementById('fontSettingsTitle').textContent = t.fontSettingsTitle;
-        document.getElementById('fontFamilyLabel').textContent = t.fontFamilyLabel;
-        document.getElementById('fontSizeLabel').textContent = t.fontSizeLabel;
-        document.getElementById('fontColorLabel').textContent = t.fontColorLabel;
-        document.getElementById('fontStyleLabel').textContent = t.fontStyleLabel;
-        document.getElementById('removePhotoText').textContent = t.removePhotoText;
-        document.getElementById('resetText').textContent = t.resetText;
+        setTextContent('fontSettingsTitle', t.fontSettingsTitle);
+        setTextContent('fontFamilyLabel', t.fontFamilyLabel);
+        setTextContent('fontSizeLabel', t.fontSizeLabel);
+        setTextContent('fontColorLabel', t.fontColorLabel);
+        setTextContent('fontStyleLabel', t.fontStyleLabel);
+        setTextContent('removePhotoText', t.removePhotoText);
+        setTextContent('resetText', t.resetText);
         
         // Update font size display
-        document.getElementById('fontSizeValue').textContent = this.fontSettings.size + 'px';
+        setTextContent('fontSizeValue', this.fontSettings.size + 'px');
     }
     
     startCountdown() {
-        const dashainDate = new Date('2025-09-22').getTime(); // Dashain 2025 starts September 22nd
+        // Create a dynamic festival countdown system
+        const festivals = [
+            { name: 'Dashain', date: '2024-10-03', emoji: '🏮' },
+            { name: 'Tihar', date: '2024-10-31', emoji: '🪔' },
+            { name: 'Chhath', date: '2024-11-07', emoji: '🌅' },
+            { name: 'New Year', date: '2025-01-01', emoji: '🎊' },
+            { name: 'Maghe Sankranti', date: '2025-01-14', emoji: '🌞' },
+            { name: 'Shivaratri', date: '2025-02-26', emoji: '🕉️' },
+            { name: 'Holi', date: '2025-03-14', emoji: '🎨' },
+            { name: 'Ram Navami', date: '2025-04-06', emoji: '🙏' },
+            { name: 'Buddha Jayanti', date: '2025-05-12', emoji: '☸️' },
+            { name: 'Dashain', date: '2025-09-22', emoji: '🏮' }
+        ];
+        
+        // Find the next upcoming festival
+        const now = new Date();
+        const nextFestival = festivals.find(festival => new Date(festival.date) > now) || festivals[0];
+        
+        const targetDate = new Date(nextFestival.date).getTime();
+        let countdownInterval;
+        
+        // Update countdown title
+        document.querySelector('#countdown h2').innerHTML = `Countdown to ${nextFestival.name} ${nextFestival.emoji}`;
         
         const updateCountdown = () => {
             const now = new Date().getTime();
-            const distance = dashainDate - now;
+            const distance = targetDate - now;
             
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
             
-            document.getElementById('days').textContent = String(Math.max(0, days)).padStart(2, '0');
-            document.getElementById('hours').textContent = String(Math.max(0, hours)).padStart(2, '0');
-            document.getElementById('minutes').textContent = String(Math.max(0, minutes)).padStart(2, '0');
-            document.getElementById('seconds').textContent = String(Math.max(0, seconds)).padStart(2, '0');
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+            
+            if (daysEl) daysEl.textContent = String(Math.max(0, days)).padStart(2, '0');
+            if (hoursEl) hoursEl.textContent = String(Math.max(0, hours)).padStart(2, '0');
+            if (minutesEl) minutesEl.textContent = String(Math.max(0, minutes)).padStart(2, '0');
+            if (secondsEl) secondsEl.textContent = String(Math.max(0, seconds)).padStart(2, '0');
             
             if (distance < 0) {
                 clearInterval(countdownInterval);
-                document.getElementById('countdown').innerHTML = '<h2 style="color: white; text-align: center;">🎊 Festival Time! 🎊</h2>';
+                document.getElementById('countdown').innerHTML = `<h2 style="color: white; text-align: center;">${nextFestival.emoji} ${nextFestival.name} Festival Time! ${nextFestival.emoji}</h2>`;
+                // Restart countdown for next festival after 5 seconds
+                setTimeout(() => this.startCountdown(), 5000);
             }
         };
         
         updateCountdown();
-        const countdownInterval = setInterval(updateCountdown, 1000);
+        countdownInterval = setInterval(updateCountdown, 1000);
     }
     
     async loadTemplates() {
@@ -718,6 +754,12 @@ class FestivalCardBuilder {
 
     renderTemplatePreview(ctx, template, width, height) {
         try {
+            // Safety check for template
+            if (!template || !template.id) {
+                console.warn('Template missing or has no id:', template);
+                return;
+            }
+            
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
             
@@ -3910,6 +3952,12 @@ class FestivalCardBuilder {
         const height = 600;
         const template = this.currentTemplate;
         
+        // Safety check for template
+        if (!template || !template.id) {
+            console.warn('No template selected or template missing id');
+            return;
+        }
+        
         // Save context state
         ctx.save();
         
@@ -3975,6 +4023,14 @@ class FestivalCardBuilder {
             ctx.fill();
             ctx.restore();
         }
+        
+        // Add disclaimer for preview
+        ctx.font = '8px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.textAlign = 'center';
+        ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', width / 2, height - 10);
     }
     
     renderPreviewTiharBackground(ctx, width, height, animationTime) {
@@ -4001,6 +4057,14 @@ class FestivalCardBuilder {
             ctx.arc(x, y, 1 + twinkle, 0, Math.PI * 2);
             ctx.fill();
         }
+        
+        // Add disclaimer for preview
+        ctx.font = '8px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.textAlign = 'center';
+        ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', width / 2, height - 10);
     }
     
     renderPreviewRangoliBackground(ctx, width, height, animationTime) {
@@ -4115,6 +4179,14 @@ class FestivalCardBuilder {
         const cloudOffset = animationTime * 0.3; // Slow cloud movement
         this.drawCloud(ctx, width * 0.2 + cloudOffset * width * 0.1, height * 0.15, width * 0.12);
         this.drawCloud(ctx, width * 0.6 + cloudOffset * width * 0.05, height * 0.08, width * 0.08);
+        
+        // Add disclaimer for preview
+        ctx.font = '8px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.textAlign = 'center';
+        ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', width / 2, height - 10);
     }
     
     renderPreviewMinimalistDashainBackground(ctx, width, height, animationTime) {
@@ -4409,7 +4481,7 @@ class FestivalCardBuilder {
         this.ctx.shadowBlur = 0; // No shadow
         this.ctx.shadowColor = 'transparent';
         this.ctx.textAlign = 'center';
-        // this.ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', baseWidth / 2, baseHeight - 10); // Closer to bottom
+        this.ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', baseWidth / 2, baseHeight - 10); // Closer to bottom
         
         // Reset shadow and stroke
         this.ctx.shadowBlur = 0;
@@ -4549,12 +4621,33 @@ class FestivalCardBuilder {
     async downloadGif() {
         if (!this.currentTemplate) return;
         
+        // Prevent multiple simultaneous generations
+        if (this.isGeneratingGif) {
+            console.log('GIF generation already in progress');
+            return;
+        }
+        
         try {
+            this.isGeneratingGif = true;
+            
             // Disable button and show progress
             document.getElementById('downloadGifBtn').disabled = true;
             document.getElementById('gifProgress').style.display = 'block';
             
-            // Initialize animation system
+            // Reset progress
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = 'Initializing...';
+            
+            // Clean up any existing animation system
+            if (this.animationManager) {
+                this.animationManager.reset();
+                this.animationManager = null;
+            }
+            if (this.gifExporter) {
+                this.gifExporter = null;
+            }
+            
+            // Initialize fresh animation system
             this.animationManager = new AnimationManager(this);
             this.gifExporter = new GIFExporter();
             
@@ -4565,6 +4658,9 @@ class FestivalCardBuilder {
             console.error('Error generating GIF:', error);
             alert('Error generating GIF. Please try again.');
         } finally {
+            // Reset generation state
+            this.isGeneratingGif = false;
+            
             // Re-enable button and hide progress
             document.getElementById('downloadGifBtn').disabled = false;
             document.getElementById('gifProgress').style.display = 'none';
@@ -4795,6 +4891,17 @@ class AnimationManager {
         return canvas;
     }
     
+    reset() {
+        // Reset animation state for clean generation
+        this.frameCount = 0;
+        this.animationTime = 0;
+        
+        // Clear any cached canvas
+        if (this.gifCanvas && this.gifCtx) {
+            this.gifCtx.clearRect(0, 0, this.gifCanvas.width, this.gifCanvas.height);
+        }
+    }
+    
     async renderAnimatedFrame(name, wish) {
         // Create a separate canvas for GIF generation with correct dimensions
         if (!this.gifCanvas) {
@@ -4825,6 +4932,12 @@ class AnimationManager {
         const width = 400;
         const height = 600;
         const template = this.cardBuilder.currentTemplate;
+        
+        // Safety check for template
+        if (!template || !template.id) {
+            console.warn('No template selected or template missing id');
+            return;
+        }
         
         // Save context state
         ctx.save();
@@ -5271,6 +5384,9 @@ class GIFExporter {
                 const totalFrames = animationManager.totalFrames;
                 console.log(`Starting GIF generation with ${totalFrames} frames using gifshot.js`);
                 
+                // Reset animation manager for clean generation
+                animationManager.reset();
+                
                 // Generate all frames as images
                 const images = [];
                 
@@ -5292,6 +5408,12 @@ class GIFExporter {
                     // Convert canvas to data URL
                     const dataURL = canvas.toDataURL('image/png');
                     images.push(dataURL);
+                    
+                    // Clear canvas after conversion to free memory
+                    if (canvas && canvas.getContext) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
                     
                     // Allow UI to update
                     await new Promise(resolve => setTimeout(resolve, 5));
@@ -5326,18 +5448,57 @@ class GIFExporter {
                         
                         // Convert base64 to blob and download
                         this.downloadBase64(obj.image);
+                        
+                        // Clean up resources
+                        this.cleanupResources(images, animationManager);
                         resolve();
                     } else {
                         console.error('GIF creation error:', obj.error);
+                        
+                        // Clean up resources even on error
+                        this.cleanupResources(images, animationManager);
                         reject(new Error('Failed to create GIF: ' + obj.error));
                     }
                 });
                 
             } catch (error) {
                 console.error('GIF generation error:', error);
+                
+                // Clean up resources on error
+                this.cleanupResources(images || [], animationManager);
                 reject(error);
             }
         });
+    }
+    
+    cleanupResources(images, animationManager) {
+        try {
+            // Clear images array to free memory
+            if (images && images.length > 0) {
+                console.log(`Cleaning up ${images.length} frame images`);
+                images.length = 0; // Clear array
+            }
+            
+            // Reset animation manager state
+            if (animationManager) {
+                animationManager.frameCount = 0;
+                animationManager.animationTime = 0;
+                
+                // Clear gif canvas if it exists
+                if (animationManager.gifCanvas && animationManager.gifCtx) {
+                    animationManager.gifCtx.clearRect(0, 0, animationManager.gifCanvas.width, animationManager.gifCanvas.height);
+                }
+            }
+            
+            // Force garbage collection hint
+            if (window.gc) {
+                window.gc();
+            }
+            
+            console.log('Resources cleaned up successfully');
+        } catch (cleanupError) {
+            console.warn('Error during resource cleanup:', cleanupError);
+        }
     }
     
     downloadBase64(base64) {

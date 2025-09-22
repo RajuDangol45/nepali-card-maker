@@ -109,6 +109,14 @@ class DurgaGraceTemplate {
         ctx.textBaseline = 'middle';
         ctx.fillText('दुर्गा', width / 2, height * 0.75);
         ctx.restore();
+        
+        // Add disclaimer for preview
+        ctx.font = '8px Arial';
+        ctx.fillStyle = 'rgba(212, 105, 26, 0.4)';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.textAlign = 'center';
+        ctx.fillText('Made with ❤️ on nepali-card-maker.vercel.app', width / 2, height - 10);
     }
 
     renderAnimated(ctx, width, height, animationTime) {
